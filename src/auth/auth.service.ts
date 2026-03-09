@@ -10,37 +10,41 @@ export class AuthService {
         private jwtService: JwtService,
     ) {}
 
-    async register(data: any){
+    async register(data: any) {
         const userExists = await this.prisma.user.findUnique({
             where: { email: data.email },
         });
 
-        if(userExists){
+        if (userExists) {
             throw new BadRequestException("Usuário já existe");
         }
 
         const result = await this.prisma.$transaction(async (tx) => {
-            const company = await tx.company.create({
-                data: {
-                    name: data.companyName,
-                },
-            });
 
-            const hashedPassword = await bcrypt.hash(data.password, 10)
+            const hashedPassword = await bcrypt.hash(data.password, 10);
 
             const user = await tx.user.create({
                 data: {
                     name: data.name,
                     email: data.email,
                     password: hashedPassword,
-                    companyId: company.id,
                 },
             });
 
-            return { company, user };
+            return { user };
         });
 
-        return result;
+        const payload = {
+            sub: result.user.id,
+            email: result.user.email,
+        };
+
+        const token = await this.jwtService.signAsync(payload);
+
+        return {
+            user: result.user,
+            access_token: token,
+        };
     }
 
     async login(data: any){
@@ -70,7 +74,7 @@ export class AuthService {
         const token = await this.jwtService.signAsync(payload);
 
         return {
-            acess_token: token
+            access_token: token
         }
     }
 }

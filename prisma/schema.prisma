@@ -22,12 +22,25 @@ model Plan {
 }
 
 model Company {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  name        String
+  createdAt   DateTime @default(now())
 
-  subscription Subscription[]?
-  users        User[]?
+  employees   Int
+  email       String
+  phone       String
+  site        String?
+  cep         String
+  address     String
+  number      Int
+  complement  String?
+  city        String
+  state       String
+  about       String
+
+  onboardingCompleted Boolean  @default(false)
+  subscription        Subscription[]
+  users               User[]
 }
 
 model Subscription {
@@ -48,8 +61,8 @@ model User {
   email     String   @unique
   password  String
   role      String   @default("ADMIN")
-  companyId Int
+  companyId Int?
   createdAt DateTime @default(now())
 
-  company Company @relation(fields: [companyId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
 }
