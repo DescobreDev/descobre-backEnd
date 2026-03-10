@@ -13,6 +13,7 @@ export class UsersService {
             select: {
                 id: true,
                 email: true,
+                name: true,
                 company: true,
                 role: true
             }
