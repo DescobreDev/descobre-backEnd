@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
@@ -53,7 +54,7 @@ export class AuthService {
         });
 
         if(!user){
-            throw new Error('Credenciais inválidas');
+            throw new UnauthorizedException('Credenciais inválidas');
         }
 
         const passwordMatch = await bcrypt.compare(
@@ -62,7 +63,7 @@ export class AuthService {
         )
 
         if(!passwordMatch){
-            throw new Error('Credenciais inválidas');
+            throw new UnauthorizedException('Credenciais inválidas');
         }
 
         const payload = {

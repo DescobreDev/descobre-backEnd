@@ -32,11 +32,12 @@ model Company {
   site        String?
   cep         String
   address     String
-  number      Int
+  number      String
   complement  String?
   city        String
   state       String
   about       String
+  cnpj        String @unique
 
   onboardingCompleted Boolean  @default(false)
   subscription        Subscription[]
