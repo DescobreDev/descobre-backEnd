@@ -5,6 +5,10 @@ export class CreateCompanyDto {
   @IsString()
   name: string;
 
+  @IsInt()
+  @Type(() => Number)
+  userId: number;
+
   @IsString()
   @MaxLength(14)
   cnpj: string;

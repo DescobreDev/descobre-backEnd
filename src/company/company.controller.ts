@@ -7,9 +7,8 @@ import { CreateCompanyDto } from './dto/create-company.dto';
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
 
-  @UseGuards(AuthGuard('jwt'))
-
   @Post('create')
+  @UseGuards(AuthGuard('jwt'))
   async createCompany(@Body() body: CreateCompanyDto) {
     return this.companyService.createCompany(body);
   }
