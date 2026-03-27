@@ -4,10 +4,11 @@ import { JobsService } from './jobs.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { UsageModule } from '../usage/usage.module';
+import { PlanGuard } from '../guards/plan.guard';
 
 @Module({
   imports: [PrismaModule, AuthModule, UsageModule],
   controllers: [JobsController],
-  providers: [JobsService],
+  providers: [JobsService, PlanGuard],
 })
 export class JobsModule {}

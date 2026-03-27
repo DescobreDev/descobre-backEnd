@@ -5,7 +5,7 @@ type UsageResource = 'jobsUsed' | 'aiResumeUsed' | 'aiSalaryUsed' | 'interviewsU
 
 @Injectable()
 export class UsageService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async checkAndIncrement(companyId: number, resource: UsageResource) {
     const now = new Date();
@@ -52,6 +52,37 @@ export class UsageService {
     });
   }
 
+  async decrement(companyId: number, resource: UsageResource) {
+    const now = new Date();
+
+    const usage = await this.prisma.usageRecord.findUnique({
+      where: {
+        companyId_year_month: {
+          companyId,
+          year: now.getFullYear(),
+          month: now.getMonth() + 1,
+        },
+      },
+    });
+
+    if (!usage) return;
+
+    if (usage[resource] <= 0) return;
+
+    await this.prisma.usageRecord.update({
+      where: {
+        companyId_year_month: {
+          companyId,
+          year: now.getFullYear(),
+          month: now.getMonth() + 1,
+        },
+      },
+      data: {
+        [resource]: { decrement: 1 },
+      },
+    });
+  }
+
   async getUsage(companyId: number) {
     const now = new Date();
 
@@ -75,9 +106,9 @@ export class UsageService {
     });
 
     return {
-      jobsUsed:       { used: usage?.jobsUsed ?? 0,       limit: subscription.plan.maxJobs },
-      aiResumeUsed:   { used: usage?.aiResumeUsed ?? 0,   limit: subscription.plan.maxAiResume },
-      aiSalaryUsed:   { used: usage?.aiSalaryUsed ?? 0,   limit: subscription.plan.maxAiSalary },
+      jobsUsed: { used: usage?.jobsUsed ?? 0, limit: subscription.plan.maxJobs },
+      aiResumeUsed: { used: usage?.aiResumeUsed ?? 0, limit: subscription.plan.maxAiResume },
+      aiSalaryUsed: { used: usage?.aiSalaryUsed ?? 0, limit: subscription.plan.maxAiSalary },
       interviewsUsed: { used: usage?.interviewsUsed ?? 0, limit: subscription.plan.maxInterviews },
     };
   }

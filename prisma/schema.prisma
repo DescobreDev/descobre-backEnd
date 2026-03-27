@@ -84,30 +84,24 @@ model JobBenefit {
 model Job {
   id            Int          @id @default(autoincrement())
 
-  // Informações básicas
   title         String
   description   String       @db.Text
-  sector        String
-  position      String
+  sectorId      Int
+  positionId    Int
 
-  // Tipo e contrato
   status        JobStatus    @default(ACTIVE)
   contractType  ContractType
   jobType       JobType      @default(STANDARD)
   workFormat    WorkFormat
-  workload      Int          // horas semanais
+  workload      Int
 
-  // Faixa salarial
-  salaryMin     Decimal?     @db.Decimal(10, 2)
-  salaryMax     Decimal?     @db.Decimal(10, 2)
+  salary        Decimal?     @db.Decimal(10, 2)
 
-  // Configurações
   priority      Priority     @default(MEDIUM)
   visible       Boolean      @default(true)
   affirmative   AffirmativeType @default(NOT_INFORMED)
   deadline      DateTime?
 
-  // Localização
   cep           String
   state         String
   city          String
@@ -116,16 +110,29 @@ model Job {
   number        String
   complement    String?
 
-  // Controle
   companyId     Int
   active        Boolean      @default(true)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
   company       Company      @relation(fields: [companyId], references: [id])
+
   benefits      JobBenefit[]
+  customBenefits String[]
 }
 
+model Sector {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  positions Position[]
+}
+
+model Position {
+  id     Int    @id @default(autoincrement())
+  name   String @unique
+  sectorId Int
+  sector   Sector   @relation(fields: [sectorId], references: [id])
+}
 
 model Company {
   id          Int      @id @default(autoincrement())
