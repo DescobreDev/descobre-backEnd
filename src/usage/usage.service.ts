@@ -39,9 +39,7 @@ export class UsageService {
     };
 
     if (usage[resource] >= limits[resource]) {
-      throw new BadRequestException(
-        `Limite do plano atingido para este recurso.`
-      );
+      throw new BadRequestException('Limite do plano atingido para este recurso.');
     }
 
     await this.prisma.usageRecord.update({
@@ -52,7 +50,7 @@ export class UsageService {
     });
   }
 
-  async decrement(companyId: number, resource: UsageResource) {
+  async decrement(companyId: number, resource: Exclude<UsageResource, 'jobsUsed'>) {
     const now = new Date();
 
     const usage = await this.prisma.usageRecord.findUnique({
@@ -65,9 +63,7 @@ export class UsageService {
       },
     });
 
-    if (!usage) return;
-
-    if (usage[resource] <= 0) return;
+    if (!usage || usage[resource] <= 0) return;
 
     await this.prisma.usageRecord.update({
       where: {

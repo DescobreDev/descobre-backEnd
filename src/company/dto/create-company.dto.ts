@@ -5,6 +5,7 @@ export class CreateCompanyDto {
   @IsString()
   name: string;
 
+  @IsOptional()
   @IsInt()
   @Type(() => Number)
   userId: number;

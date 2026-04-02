@@ -85,17 +85,16 @@ export class JobsService {
       include: { benefits: { include: { benefit: true } } },
     });
 
+    if (!job) throw new NotFoundException('Vaga não encontrada.');
+    if (job.companyId !== companyId) throw new ForbiddenException('Sem permissão.');
+
     const sector = await this.prisma.sector.findUnique({
       where: { id: job.sectorId },
     });
 
     const position = await this.prisma.position.findUnique({
       where: { id: job.positionId },
-    })
-
-    if (!job) throw new NotFoundException('Vaga não encontrada.');
-
-    if (job.companyId !== companyId) throw new ForbiddenException('Sem permissão.');
+    });
 
     return [job, sector, position];
   }
@@ -109,8 +108,8 @@ export class JobsService {
     const {
       benefitIds = [],
       customBenefits = [],
-      sector,
-      position,
+      sectorId,
+      positionId,
       ...jobData
     } = data;
 
@@ -136,44 +135,13 @@ export class JobsService {
     });
   }
 
-  async updateStatusJob(id: number, companyId: number, status: 'ACTIVE' | 'INACTIVE',) {
+  async updateStatusJob(id: number, companyId: number, status: 'ACTIVE' | 'INACTIVE') {
     return this.prisma.$transaction(async (tx) => {
       const job = await tx.job.findUnique({ where: { id } });
 
-      if (!job) {
-        throw new NotFoundException('Vaga não encontrada.');
-      }
-
-      if (job.companyId !== companyId) {
-        throw new ForbiddenException('Sem permissão.');
-      }
-
-      if (job.status === status) {
-        return job;
-      }
-
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1;
-
-      if (status === 'INACTIVE') {
-        const usage = await tx.usageRecord.findUnique({
-          where: {
-            companyId_year_month: { companyId, year, month },
-          },
-        });
-
-        if (usage && usage.jobsUsed > 0) {
-          await tx.usageRecord.update({
-            where: {
-              companyId_year_month: { companyId, year, month },
-            },
-            data: {
-              jobsUsed: { decrement: 1 },
-            },
-          });
-        }
-      }
+      if (!job) throw new NotFoundException('Vaga não encontrada.');
+      if (job.companyId !== companyId) throw new ForbiddenException('Sem permissão.');
+      if (job.status === status) return job;
 
       if (status === 'ACTIVE') {
         const subscription = await tx.subscription.findUnique({
@@ -184,31 +152,6 @@ export class JobsService {
         if (!subscription || !subscription.active) {
           throw new BadRequestException('Empresa sem plano ativo.');
         }
-
-        const usage = await tx.usageRecord.findUnique({
-          where: {
-            companyId_year_month: { companyId, year, month },
-          },
-        });
-
-        if (!usage) {
-          throw new BadRequestException('Registro de uso não encontrado.');
-        }
-
-        const limit = subscription.plan.maxJobs;
-
-        if (usage.jobsUsed >= limit) {
-          throw new BadRequestException('Limite de vagas atingido.');
-        }
-
-        await tx.usageRecord.update({
-          where: {
-            companyId_year_month: { companyId, year, month },
-          },
-          data: {
-            jobsUsed: { increment: 1 },
-          },
-        });
       }
 
       return tx.job.update({
@@ -228,41 +171,12 @@ export class JobsService {
       if (!job) throw new NotFoundException('Vaga não encontrada.');
       if (job.companyId !== companyId) throw new ForbiddenException('Sem permissão.');
 
-      if (!job.active) {
-        return job;
-      }
+      if (!job.active) return job;
 
       await tx.job.update({
         where: { id },
         data: { active: false, status: 'INACTIVE' },
       });
-
-      const now = new Date();
-
-      const usage = await tx.usageRecord.findUnique({
-        where: {
-          companyId_year_month: {
-            companyId,
-            year: now.getFullYear(),
-            month: now.getMonth() + 1,
-          },
-        },
-      });
-
-      if (usage && usage.jobsUsed > 0) {
-        await tx.usageRecord.update({
-          where: {
-            companyId_year_month: {
-              companyId,
-              year: now.getFullYear(),
-              month: now.getMonth() + 1,
-            },
-          },
-          data: {
-            jobsUsed: { decrement: 1 },
-          },
-        });
-      }
 
       return { success: true };
     });
