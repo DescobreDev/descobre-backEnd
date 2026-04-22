@@ -9,9 +9,10 @@ import { CompanyModule } from './company/company.module';
 import { UsageModule } from './usage/usage.module';
 import { JobsModule } from './jobs/jobs.module';
 import { PaymentsModule } from './payments/payments.module';
+import { GeminiModule } from './gemini/gemini.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, UsageModule, JobsModule, PaymentsModule],
+  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, UsageModule, JobsModule, PaymentsModule, GeminiModule],
   controllers: [AppController],
   providers: [AppService],
 })
