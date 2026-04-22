@@ -29,6 +29,22 @@ const BENEFITS = [
     "Vale Cultura",
 ];
 async function main() {
+    const stages = [
+        { name: 'Triagem', order: 1, type: 'SCREENING' },
+        { name: 'Entrevista', order: 2, type: 'INTERVIEW' },
+        { name: 'Oferta', order: 3, type: 'OFFER' },
+    ];
+
+    for (const stage of stages) {
+        await prisma.recruitmentStage.upsert({
+            where: { name: stage.name },
+            update: {},
+            create: stage,
+        });
+    }
+
+    console.log('Etapas criadas.');
+
     await exports.prisma.plan.createMany({
         data: [
             {
@@ -7874,10 +7890,10 @@ async function main() {
 }
 main()
     .catch((e) => {
-    console.error(e);
-    process.exit(1);
-})
+        console.error(e);
+        process.exit(1);
+    })
     .finally(async () => {
-    await exports.prisma.$disconnect();
-});
+        await exports.prisma.$disconnect();
+    });
 //# sourceMappingURL=seed.js.map

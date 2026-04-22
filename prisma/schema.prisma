@@ -17,6 +17,7 @@ model Plan {
   name          String
   description   String         
   price         Decimal        @db.Decimal(10, 2)
+  annualPrice   Decimal        @db.Decimal(10, 2)
   maxJobs       Int            
   maxAiResume   Int            
   maxAiSalary   Int            
@@ -102,12 +103,12 @@ model Job {
   affirmative   AffirmativeType @default(NOT_INFORMED)
   deadline      DateTime?
 
-  cep           String
-  state         String
-  city          String
-  neighborhood  String
-  address       String
-  number        String
+  cep           String?
+  state         String?
+  city          String?
+  neighborhood  String?
+  address       String?
+  number        String?
   complement    String?
 
   companyId     Int
@@ -152,6 +153,9 @@ model Company {
   about       String
   cnpj        String @unique
 
+  asaasCustomerId     String?
+  cardToken           CardToken?
+
   onboardingCompleted Boolean  @default(false)
   subscription        Subscription[]
   users               User[]
@@ -163,9 +167,11 @@ model Subscription {
   id        Int       @id @default(autoincrement())
   companyId Int       @unique
   planId    Int
+  isAnnual      Boolean        @default(false)
   startDate DateTime  @default(now())
   endDate   DateTime?
   active    Boolean   @default(true)
+  asaasSubscriptionId String?
 
   company Company @relation(fields: [companyId], references: [id])
   plan    Plan    @relation(fields: [planId], references: [id])
@@ -180,7 +186,36 @@ model User {
   companyId Int?
   createdAt DateTime @default(now())
 
+  // ── Email verification ──────────────────────
+  isVerified              Boolean   @default(false)
+  verificationCode        String?   // hash do código OTP
+  verificationCodeExpires DateTime?
+  verificationAttempts    Int       @default(0) // evita brute-force
+  lastCodeSentAt          DateTime? // throttle de reenvio
+
   company Company? @relation(fields: [companyId], references: [id])
+}
+
+
+model CardToken {
+  id        Int      @id @default(autoincrement())
+  token     String   // creditCardToken do Asaas
+  lastFour  String   // últimos 4 dígitos (ex: "1111")
+  brand     String   // VISA, MASTERCARD, etc.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId Int     @unique
+}
+
+model WebhookLog {
+  id                   Int      @id @default(autoincrement())
+  event                String
+  asaasPaymentId       String
+  asaasSubscriptionId  String
+  payload              Json
+  createdAt            DateTime @default(now())
 }
 
 model UsageRecord {

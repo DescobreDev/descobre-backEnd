@@ -41,23 +41,9 @@ export class PlansService {
         },
       });
 
-      const now = new Date();
+      
 
-      await this.prisma.usageRecord.upsert({
-        where: {
-          companyId_year_month: {
-            companyId,
-            year: now.getFullYear(),
-            month: now.getMonth() + 1,
-          },
-        },
-        update: {},
-        create: {
-          companyId,
-          year: now.getFullYear(),
-          month: now.getMonth() + 1,
-        },
-      });
+      
 
       return subscription;
 

@@ -19,6 +19,9 @@ export class JobsService {
       customBenefits = [],
       sector,
       position,
+      companyId: _,
+      sectorId,
+      positionId,
       ...jobData
     } = data;
 
@@ -29,10 +32,11 @@ export class JobsService {
     return this.prisma.job.create({
       data: {
         ...jobData,
-        companyId,
-
-        sectorId: data.sectorId,
-        positionId: data.positionId,
+        company: {
+          connect: { id: companyId },
+        },
+        sectorId,
+        positionId,
 
         benefits: {
           create: benefitIds.map((benefitId: number) => ({ benefitId })),
