@@ -10,7 +10,8 @@ type AsaasEvent =
     | 'PAYMENT_RECEIVED'
     | 'PAYMENT_OVERDUE'
     | 'PAYMENT_REFUNDED'
-    | 'PAYMENT_CHARGEBACK_REQUESTED';
+    | 'PAYMENT_CHARGEBACK_REQUESTED'
+    | 'SUBSCRIPTION_DELETED';
 
 interface AsaasWebhookPayload {
     event: AsaasEvent;
@@ -66,20 +67,48 @@ export class WebhookController {
             return { received: true };
         }
 
+        await this.prisma.payment.upsert({
+            where: {
+                asaasPaymentId: payment.id,
+            },
+            update: {
+                status: payment.status,
+                value: payment.value,
+                dueDate: new Date(payment.dueDate),
+                paidAt: event === 'PAYMENT_RECEIVED' ? new Date() : null,
+            },
+            create: {
+                asaasPaymentId: payment.id,
+                asaasSubscriptionId: payment.subscription,
+                companyId: subscription.companyId,
+                subscriptionId: subscription.id,
+                value: payment.value,
+                status: payment.status,
+                billingType: null,
+                dueDate: new Date(payment.dueDate),
+                paidAt: event === 'PAYMENT_RECEIVED' ? new Date() : null,
+            },
+        });
+
         switch (event) {
             case 'PAYMENT_CONFIRMED':
             case 'PAYMENT_RECEIVED': {
-                const endDate = new Date(payment.dueDate);
-                endDate.setMonth(endDate.getMonth() + 1);
-
                 if (!subscription) {
                     this.logger.warn(`[Webhook] Subscription não encontrada, ignorando ativação.`);
                     return { received: true };
                 }
 
+                const endDate = new Date(payment.dueDate);
+
+                if (subscription.isAnnual) {
+                    endDate.setFullYear(endDate.getFullYear() + 1);
+                } else {
+                    endDate.setMonth(endDate.getMonth() + 1);
+                }
+
                 await this.prisma.subscription.update({
                     where: { id: subscription.id },
-                    data: { active: true, endDate },
+                    data: { active: true, endDate, canceledAt: null },
                 });
 
                 const now = new Date();
@@ -122,6 +151,16 @@ export class WebhookController {
                 });
 
                 this.logger.warn(`[Webhook] Plano CANCELADO (${event}) → company ${subscription.companyId}`);
+                break;
+            }
+
+            case 'SUBSCRIPTION_DELETED': {
+                await this.prisma.subscription.updateMany({
+                    where: { asaasSubscriptionId: payment.subscription },
+                    data: { active: false, endDate: new Date() },
+                });
+
+                this.logger.warn(`[Webhook] Assinatura DELETADA → ${payment.subscription}`);
                 break;
             }
 

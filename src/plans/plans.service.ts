@@ -1,9 +1,9 @@
-import { Injectable, BadRequestException, InternalServerErrorException  } from '@nestjs/common'
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class PlansService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll() {
     return this.prisma.plan.findMany({
@@ -13,18 +13,18 @@ export class PlansService {
   }
 
   async subscribePlan(companyId: number, planId: number) {
-      if (!companyId) {
-        throw new BadRequestException('Você precisa ter uma empresa vinculada para assinar um plano.');
-      }
+    if (!companyId) {
+      throw new BadRequestException('Você precisa ter uma empresa vinculada para assinar um plano.');
+    }
 
-      const plan = await this.prisma.plan.findUnique({
-        where: { id: planId },
-      });
+    const plan = await this.prisma.plan.findUnique({
+      where: { id: planId },
+    });
 
-      if (!plan) {
-        throw new BadRequestException('Plano não encontrado');
-      }
-    
+    if (!plan) {
+      throw new BadRequestException('Plano não encontrado');
+    }
+
     try {
       const subscription = await this.prisma.subscription.upsert({
         where: { companyId },
@@ -38,12 +38,11 @@ export class PlansService {
           companyId,
           planId,
           active: true,
+          isAnnual: false,
+          endDate: new Date(),
+          asaasSubscriptionId: '',
         },
       });
-
-      
-
-      
 
       return subscription;
 

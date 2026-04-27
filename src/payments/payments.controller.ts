@@ -1,10 +1,11 @@
 import {
-    Controller, Post, Body, Req, UseGuards,
+    Controller, Post, Body, Req, UseGuards, Get,
     BadRequestException, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AsaasService } from './asaas.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { PlanGuard } from '../guards/plan.guard';
 
 @Controller('payments/asaas')
 @UseGuards(AuthGuard('jwt'))
@@ -39,6 +40,37 @@ export class PaymentsController {
         });
 
         return { customerId };
+    }
+
+    @Post('cancel')
+    @HttpCode(HttpStatus.OK)
+    async cancelSubscription(@Req() req) {
+        const companyId = req.user.companyId;
+        if (!companyId) throw new BadRequestException('Empresa não vinculada.');
+
+        const subscription = await this.prisma.subscription.findUnique({
+            where: { companyId },
+        });
+
+        if (!subscription) throw new BadRequestException('Nenhuma assinatura ativa.');
+        if (!subscription.active) throw new BadRequestException('Assinatura já está inativa.');
+        if (!subscription.asaasSubscriptionId) throw new BadRequestException('ID Asaas não encontrado.');
+
+        await this.asaas.cancelSubscription(subscription.asaasSubscriptionId);
+
+        await this.prisma.subscription.update({
+            where: { companyId },
+            data: {
+                canceledAt: new Date(),
+                active: true,
+            },
+        });
+
+        return {
+            success: true,
+            message: 'Assinatura cancelada. Acesso mantido até o fim do período.',
+            accessUntil: subscription.endDate,
+        };
     }
 
     @Post('tokenize')
@@ -115,7 +147,8 @@ export class PaymentsController {
                 asaasSubscriptionId: asaasSubId,
                 planId: plan.id,
                 active: false,
-                isAnnual: body.isAnnual ?? false
+                isAnnual: body.isAnnual ?? false,
+                canceledAt: null
             },
             create: {
                 companyId,
@@ -123,10 +156,43 @@ export class PaymentsController {
                 asaasSubscriptionId: asaasSubId,
                 isAnnual: body.isAnnual ?? false,
                 active: false,
+                canceledAt: null,
                 endDate: new Date(),
             },
         });
 
         return { success: true, status };
+    }
+
+
+    @Get('history')
+    async getPaymentHistory(@Req() req) {
+        const companyId = req.user.companyId;
+
+        if (!companyId) {
+            throw new BadRequestException('Empresa não vinculada.');
+        }
+
+        const payments = await this.prisma.payment.findMany({
+            where: { companyId },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                subscription: {
+                    include: {
+                        plan: true,
+                    },
+                },
+            },
+        });
+
+        return payments.map(p => ({
+            id: p.id,
+            asaasId: p.asaasPaymentId,
+            value: Number(p.value),
+            status: p.status,
+            dueDate: p.dueDate,
+            paidAt: p.paidAt,
+            plan: p.subscription?.plan?.name,
+        }));
     }
 }

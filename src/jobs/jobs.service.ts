@@ -112,8 +112,11 @@ export class JobsService {
     const {
       benefitIds = [],
       customBenefits = [],
+      sector,
+      position,
       sectorId,
       positionId,
+      companyId: _,
       ...jobData
     } = data;
 
@@ -125,12 +128,12 @@ export class JobsService {
       where: { id },
       data: {
         ...jobData,
-
+        sectorId,
+        positionId,
         benefits: {
           deleteMany: {},
           create: benefitIds.map((benefitId: number) => ({ benefitId })),
         },
-
         customBenefits,
       },
       include: {

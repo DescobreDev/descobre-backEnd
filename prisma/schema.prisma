@@ -15,13 +15,13 @@ datasource db {
 model Plan {
   id            Int            @id @default(autoincrement())
   name          String
-  description   String         
+  description   String
   price         Decimal        @db.Decimal(10, 2)
   annualPrice   Decimal        @db.Decimal(10, 2)
-  maxJobs       Int            
-  maxAiResume   Int            
-  maxAiSalary   Int            
-  maxInterviews Int            
+  maxJobs       Int
+  maxAiResume   Int
+  maxAiSalary   Int
+  maxInterviews Int
   recommended   Boolean        @default(false)
   active        Boolean        @default(true)
   createdAt     DateTime       @default(now())
@@ -67,8 +67,8 @@ enum AffirmativeType {
 }
 
 model Benefit {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id   Int          @id @default(autoincrement())
+  name String       @unique
   jobs JobBenefit[]
 }
 
@@ -83,42 +83,42 @@ model JobBenefit {
 }
 
 model Job {
-  id            Int          @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  title         String
-  description   String       @db.Text
-  sectorId      Int
-  positionId    Int
+  title       String
+  description String @db.Text
+  sectorId    Int
+  positionId  Int
 
-  status        JobStatus    @default(ACTIVE)
-  contractType  ContractType
-  jobType       JobType      @default(STANDARD)
-  workFormat    WorkFormat
-  workload      Int
+  status       JobStatus    @default(ACTIVE)
+  contractType ContractType
+  jobType      JobType      @default(STANDARD)
+  workFormat   WorkFormat
+  workload     Int
 
-  salary        Decimal?     @db.Decimal(10, 2)
+  salary Decimal? @db.Decimal(10, 2)
 
-  priority      Priority     @default(MEDIUM)
-  visible       Boolean      @default(true)
-  affirmative   AffirmativeType @default(NOT_INFORMED)
-  deadline      DateTime?
+  priority    Priority        @default(MEDIUM)
+  visible     Boolean         @default(true)
+  affirmative AffirmativeType @default(NOT_INFORMED)
+  deadline    DateTime?
 
-  cep           String?
-  state         String?
-  city          String?
-  neighborhood  String?
-  address       String?
-  number        String?
-  complement    String?
+  cep          String?
+  state        String?
+  city         String?
+  neighborhood String?
+  address      String?
+  number       String?
+  complement   String?
 
-  companyId     Int
-  active        Boolean      @default(true)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  companyId Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  company       Company      @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
 
-  benefits      JobBenefit[]
+  benefits       JobBenefit[]
   customBenefits String[]
 }
 
@@ -129,52 +129,55 @@ model Sector {
 }
 
 model Position {
-  id     Int    @id @default(autoincrement())
-  name   String @unique
+  id       Int    @id @default(autoincrement())
+  name     String @unique
   sectorId Int
-  sector   Sector   @relation(fields: [sectorId], references: [id])
+  sector   Sector @relation(fields: [sectorId], references: [id])
 }
 
 model Company {
-  id          Int      @id @default(autoincrement())
-  name        String
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
 
-  employees   Int
-  email       String
-  phone       String
-  site        String?
-  cep         String
-  address     String
-  number      String
-  complement  String?
-  city        String
-  state       String
-  about       String
-  cnpj        String @unique
+  employees  Int
+  email      String
+  phone      String
+  site       String?
+  cep        String
+  address    String
+  number     String
+  complement String?
+  city       String
+  state      String
+  about      String
+  cnpj       String  @unique
 
-  asaasCustomerId     String?
-  cardToken           CardToken?
+  asaasCustomerId String?
+  cardToken       CardToken?
 
-  onboardingCompleted Boolean  @default(false)
+  onboardingCompleted Boolean        @default(false)
   subscription        Subscription[]
   users               User[]
   usageRecords        UsageRecord[]
   jobs                Job[]
+  payments            Payment[]
 }
 
 model Subscription {
-  id        Int       @id @default(autoincrement())
-  companyId Int       @unique
-  planId    Int
-  isAnnual      Boolean        @default(false)
-  startDate DateTime  @default(now())
-  endDate   DateTime?
-  active    Boolean   @default(true)
-  asaasSubscriptionId String?
+  id                  Int       @id @default(autoincrement())
+  companyId           Int       @unique
+  planId              Int
+  isAnnual            Boolean   @default(false)
+  startDate           DateTime  @default(now())
+  endDate             DateTime?
+  active              Boolean   @default(true)
+  asaasSubscriptionId String
+  canceledAt DateTime?
 
-  company Company @relation(fields: [companyId], references: [id])
-  plan    Plan    @relation(fields: [planId], references: [id])
+  company  Company   @relation(fields: [companyId], references: [id])
+  plan     Plan      @relation(fields: [planId], references: [id])
+  payments Payment[]
 }
 
 model User {
@@ -188,7 +191,7 @@ model User {
 
   // ── Email verification ──────────────────────
   isVerified              Boolean   @default(false)
-  verificationCode        String?   // hash do código OTP
+  verificationCode        String? // hash do código OTP
   verificationCodeExpires DateTime?
   verificationAttempts    Int       @default(0) // evita brute-force
   lastCodeSentAt          DateTime? // throttle de reenvio
@@ -196,12 +199,11 @@ model User {
   company Company? @relation(fields: [companyId], references: [id])
 }
 
-
 model CardToken {
   id        Int      @id @default(autoincrement())
-  token     String   // creditCardToken do Asaas
-  lastFour  String   // últimos 4 dígitos (ex: "1111")
-  brand     String   // VISA, MASTERCARD, etc.
+  token     String // creditCardToken do Asaas
+  lastFour  String // últimos 4 dígitos (ex: "1111")
+  brand     String // VISA, MASTERCARD, etc.
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -210,23 +212,39 @@ model CardToken {
 }
 
 model WebhookLog {
-  id                   Int      @id @default(autoincrement())
-  event                String
-  asaasPaymentId       String
-  asaasSubscriptionId  String
-  payload              Json
-  createdAt            DateTime @default(now())
+  id                  Int      @id @default(autoincrement())
+  event               String
+  asaasPaymentId      String
+  asaasSubscriptionId String
+  payload             Json
+  createdAt           DateTime @default(now())
+}
+
+model Payment {
+  id                  Int           @id @default(autoincrement())
+  asaasPaymentId      String        @unique
+  asaasSubscriptionId String
+  companyId           Int
+  subscriptionId      Int?
+  value               Decimal       @db.Decimal(10, 2)
+  status              String
+  billingType         String?
+  dueDate             DateTime
+  paidAt              DateTime?
+  createdAt           DateTime      @default(now())
+  company             Company       @relation(fields: [companyId], references: [id])
+  subscription        Subscription? @relation(fields: [subscriptionId], references: [id])
 }
 
 model UsageRecord {
-  id           Int      @id @default(autoincrement())
-  companyId    Int
-  year         Int      // ano de referência
-  month        Int      // mês de referência
-  jobsUsed     Int      @default(0)
-  aiResumeUsed Int      @default(0)
-  aiSalaryUsed Int      @default(0)
-  interviewsUsed Int    @default(0)
+  id             Int @id @default(autoincrement())
+  companyId      Int
+  year           Int // ano de referência
+  month          Int // mês de referência
+  jobsUsed       Int @default(0)
+  aiResumeUsed   Int @default(0)
+  aiSalaryUsed   Int @default(0)
+  interviewsUsed Int @default(0)
 
   company Company @relation(fields: [companyId], references: [id])
 

@@ -49,7 +49,7 @@ export class AsaasService {
     private readonly config: ConfigService,
   ) {
     this.baseUrl = this.config.get<string>('ASAAS_BASE_URL');
-    this.apiKey  = this.config.get<string>('ASAAS_API_KEY');
+    this.apiKey = this.config.get<string>('ASAAS_API_KEY');
   }
 
   private get headers() {
@@ -59,7 +59,7 @@ export class AsaasService {
     };
   }
 
-  private async request<T>(method: 'post' | 'get', path: string, body?: object): Promise<T> {
+  private async request<T>(method: 'post' | 'get' | 'delete', path: string, body?: object): Promise<T> {
     try {
       const { data } = await firstValueFrom(
         this.http.request<T>({
@@ -80,30 +80,34 @@ export class AsaasService {
   async createCustomer(dto: CreateCustomerDto): Promise<{ id: string }> {
 
     return this.request<{ id: string }>('post', '/customers', {
-      name:        dto.name,
-      cpfCnpj:    dto.cpfCnpj.replace(/\D/g, ''),
-      email:       dto.email,
+      name: dto.name,
+      cpfCnpj: dto.cpfCnpj.replace(/\D/g, ''),
+      email: dto.email,
       mobilePhone: dto.mobilePhone.replace(/\D/g, ''),
     });
+  }
+
+  async cancelSubscription(asaasSubId: string): Promise<void> {
+    await this.request('delete', `/subscriptions/${asaasSubId}`, {});
   }
 
   async tokenizeCard(dto: TokenizeCardDto): Promise<{ creditCardToken: string; creditCardNumber: string; creditCardBrand: string }> {
     return this.request('post', '/creditCard/tokenize', {
       customer: dto.customerId,
       creditCard: {
-        holderName:  dto.creditCard.holderName,
-        number:      dto.creditCard.number,
+        holderName: dto.creditCard.holderName,
+        number: dto.creditCard.number,
         expiryMonth: dto.creditCard.expiryMonth,
-        expiryYear:  dto.creditCard.expiryYear,
-        ccv:         dto.creditCard.ccv,
+        expiryYear: dto.creditCard.expiryYear,
+        ccv: dto.creditCard.ccv,
       },
       creditCardHolderInfo: {
-        name:       dto.creditCardHolderInfo.name,
-        cpfCnpj:   dto.creditCardHolderInfo.cpfCnpj.replace(/\D/g, ''),
-        email:      dto.creditCardHolderInfo.email,
+        name: dto.creditCardHolderInfo.name,
+        cpfCnpj: dto.creditCardHolderInfo.cpfCnpj.replace(/\D/g, ''),
+        email: dto.creditCardHolderInfo.email,
         addressNumber: dto.creditCardHolderInfo.addressNumber,
         postalCode: dto.creditCardHolderInfo.postalCode.replace(/\D/g, ''),
-        phone:      dto.creditCardHolderInfo.phone.replace(/\D/g, ''),
+        phone: dto.creditCardHolderInfo.phone.replace(/\D/g, ''),
       },
     });
   }
@@ -115,12 +119,12 @@ export class AsaasService {
     const dueDateStr = nextDueDate.toISOString().split('T')[0];
 
     return this.request('post', '/subscriptions', {
-      customer:        dto.customerId,
-      billingType:    'CREDIT_CARD',
-      value:           dto.value,
-      nextDueDate:    dueDateStr,
-      cycle:          dto.isAnnual === true ? 'YEARLY' : 'MONTHLY',
-      description:    dto.description,
+      customer: dto.customerId,
+      billingType: 'CREDIT_CARD',
+      value: dto.value,
+      nextDueDate: dueDateStr,
+      cycle: dto.isAnnual === true ? 'YEARLY' : 'MONTHLY',
+      description: dto.description,
       creditCardToken: dto.creditCardToken,
       externalReference: String(dto.planId),
     });
