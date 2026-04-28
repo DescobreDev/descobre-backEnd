@@ -2,6 +2,8 @@ import {
   Injectable,
   BadRequestException,
   UnauthorizedException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
@@ -39,7 +41,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   // ─── Register ────────────────────────────────────────────────────────────────
 
@@ -195,7 +197,37 @@ export class AuthService {
     if (!passwordMatch) throw new UnauthorizedException('Credenciais inválidas.');
 
     if (!user.isVerified) {
-      throw new UnauthorizedException('Confirme seu email antes de entrar.');
+      // Reenvia o código se já passou o cooldown
+      const canResend =
+        !user.lastCodeSentAt ||
+        Date.now() - user.lastCodeSentAt.getTime() >= RESEND_COOLDOWN_MS;
+
+      if (canResend) {
+        const code = generateCode();
+        const hashedCode = await bcrypt.hash(code, 10);
+
+        await this.prisma.user.update({
+          where: { email: data.email },
+          data: {
+            verificationCode: hashedCode,
+            verificationCodeExpires: new Date(Date.now() + 15 * 60 * 1000),
+            verificationAttempts: 0,
+            lastCodeSentAt: new Date(),
+          },
+        });
+
+        await this.mailService.sendVerificationCode(user.email, code, user.name);
+      }
+
+      throw new HttpException(
+        {
+          statusCode: 403,
+          error: 'email_not_verified',
+          message: 'Confirme seu email antes de entrar. Um novo código foi enviado.',
+          email: user.email,
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const payload = {

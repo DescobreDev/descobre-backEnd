@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Request, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { ApplicationStatus } from '@prisma/client';
 import { JobsService } from './jobs.service';
 import { PlanGuard } from '../guards/plan.guard';
 
@@ -45,11 +46,26 @@ export class JobsController {
 
   @Post(':id/status')
   updateStatusJob(@Param('id') id: number, @Body('status') status: 'ACTIVE' | 'INACTIVE', @Request() req) {
-    return this.jobsService.updateStatusJob(id, req.user.companyId, status );
+    return this.jobsService.updateStatusJob(id, req.user.companyId, status);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
     return this.jobsService.remove(+id, req.user.companyId);
+  }
+
+  @Get(':id/candidates')
+  findCandidates(@Param('id') id: string, @Request() req, @Query('page') page = '1', @Query('limit') limit = '10', @Query('status') status?: ApplicationStatus,) {
+    return this.jobsService.findCandidates(+id, req.user.companyId, +page, +limit, status,);
+  }
+
+  @Get(':id/candidates/:applicationId')
+  findCandidate(@Param('id') jobId: string, @Param('applicationId') applicationId: string, @Request() req,) {
+    return this.jobsService.findCandidate(+jobId, +applicationId, req.user.companyId);
+  }
+
+  @Patch(':id/candidates/:applicationId/status')
+  updateApplicationStatus(@Param('id') jobId: string, @Param('applicationId') applicationId: string, @Body('status') status: ApplicationStatus, @Body('note') note: string, @Request() req,) {
+    return this.jobsService.updateApplicationStatus(+jobId, +applicationId, req.user.companyId, status, note);
   }
 }

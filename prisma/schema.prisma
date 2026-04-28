@@ -120,6 +120,29 @@ model Job {
 
   benefits       JobBenefit[]
   customBenefits String[]
+
+  applications Application[]
+  profile JobProfile?
+}
+
+model JobProfile {
+  id          Int         @id @default(autoincrement())
+  jobId       Int         @unique
+  priority    ProfileType // qual perfil a IA priorizou
+
+  analyst     Int @default(0)
+  communicator Int @default(0)
+  executor    Int @default(0)
+  planner     Int @default(0)
+
+  job Job @relation(fields: [jobId], references: [id])
+}
+
+enum ProfileType {
+  ANALYST
+  COMMUNICATOR
+  EXECUTOR
+  PLANNER
 }
 
 model Sector {
@@ -173,7 +196,7 @@ model Subscription {
   endDate             DateTime?
   active              Boolean   @default(true)
   asaasSubscriptionId String
-  canceledAt DateTime?
+  canceledAt          DateTime?
 
   company  Company   @relation(fields: [companyId], references: [id])
   plan     Plan      @relation(fields: [planId], references: [id])
@@ -189,7 +212,6 @@ model User {
   companyId Int?
   createdAt DateTime @default(now())
 
-  // ── Email verification ──────────────────────
   isVerified              Boolean   @default(false)
   verificationCode        String? // hash do código OTP
   verificationCodeExpires DateTime?
@@ -249,4 +271,180 @@ model UsageRecord {
   company Company @relation(fields: [companyId], references: [id])
 
   @@unique([companyId, year, month])
+}
+
+// ─── CANDIDATO ────────────────────────────────────────────
+
+model Candidate {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  phone     String?
+  birthDate DateTime?
+  cpf       String?   @unique
+  profile   String?
+
+  isVerified              Boolean   @default(false)
+  verificationCode        String?
+  verificationCodeExpires DateTime?
+  verificationAttempts    Int       @default(0)
+  lastCodeSentAt          DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profileAnalyst    Int @default(0)
+  profileCommunicator Int @default(0)
+  profileExecutor   Int @default(0)
+  profilePlanner    Int @default(0)
+  profileCompleted  Boolean @default(false)
+
+  resume       CandidateResume?
+  applications Application[]
+}
+
+model CandidateResume {
+  id          Int     @id @default(autoincrement())
+  candidateId Int     @unique
+  cvFileUrl   String? // PDF uploadado
+  isGuided    Boolean @default(false)
+  isComplete  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  candidate   Candidate          @relation(fields: [candidateId], references: [id])
+  experiences ResumeExperience[]
+  educations  ResumeEducation[]
+  skills      ResumeSkill[]
+  languages   ResumeLanguage[]
+  extras      ResumeExtra[]
+}
+
+model ResumeExperience {
+  id          Int       @id @default(autoincrement())
+  resumeId    Int
+  company     String
+  position    String
+  description String?   @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean   @default(false)
+
+  resume CandidateResume @relation(fields: [resumeId], references: [id])
+}
+
+model ResumeEducation {
+  id          Int            @id @default(autoincrement())
+  resumeId    Int
+  institution String
+  course      String
+  level       EducationLevel
+  startDate   DateTime
+  endDate     DateTime?
+  current     Boolean        @default(false)
+
+  resume CandidateResume @relation(fields: [resumeId], references: [id])
+}
+
+model ResumeSkill {
+  id       Int         @id @default(autoincrement())
+  resumeId Int
+  name     String
+  level    SkillLevel?
+
+  resume CandidateResume @relation(fields: [resumeId], references: [id])
+}
+
+model ResumeLanguage {
+  id       Int           @id @default(autoincrement())
+  resumeId Int
+  language String
+  level    LanguageLevel
+
+  resume CandidateResume @relation(fields: [resumeId], references: [id])
+}
+
+model ResumeExtra {
+  id          Int       @id @default(autoincrement())
+  resumeId    Int
+  type        ExtraType
+  title       String
+  description String?
+  url         String?
+  date        DateTime?
+
+  resume CandidateResume @relation(fields: [resumeId], references: [id])
+}
+
+model Application {
+  id          Int               @id @default(autoincrement())
+  candidateId Int
+  jobId       Int
+  status      ApplicationStatus @default(RECEBIDA)
+  cvSnapshot  String?
+  notes       String?           @db.Text
+
+  appliedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  candidate Candidate            @relation(fields: [candidateId], references: [id])
+  job       Job                  @relation(fields: [jobId], references: [id])
+  history   ApplicationHistory[]
+
+  @@unique([candidateId, jobId])
+}
+
+model ApplicationHistory {
+  id            Int               @id @default(autoincrement())
+  applicationId Int
+  status        ApplicationStatus
+  note          String?
+  changedAt     DateTime          @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id])
+}
+
+enum ApplicationStatus {
+  RECEBIDA       // Candidatura recebida
+  EM_TRIAGEM     // Em triagem
+  ENTREVISTA     // Entrevista agendada
+  APROVADO       // Aprovado
+  REPROVADO      // Reprovado
+  DESISTIU       // Candidato desistiu
+}
+
+enum EducationLevel {
+  FUNDAMENTAL
+  MEDIO
+  TECNICO
+  SUPERIOR
+  POS_GRADUACAO
+  MESTRADO
+  DOUTORADO
+}
+
+enum SkillLevel {
+  BASICO
+  INTERMEDIARIO
+  AVANCADO
+  ESPECIALISTA
+}
+
+enum LanguageLevel {
+  BASICO
+  INTERMEDIARIO
+  AVANCADO
+  FLUENTE
+  NATIVO
+}
+
+enum ExtraType {
+  CERTIFICADO
+  CURSO
+  PORTFOLIO
+  PREMIO
+  PUBLICACAO
+  OUTRO
 }

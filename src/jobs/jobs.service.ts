@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ApplicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsageService } from '../usage/usage.service';
 
@@ -77,6 +78,119 @@ export class JobsService {
         hasPrev: page > 1,
       },
     };
+  }
+
+  async findCandidates(jobId: number, companyId: number, page = 1, limit = 10, status?: ApplicationStatus) {
+    const job = await this.prisma.job.findFirst({
+      where: { id: jobId, companyId, active: true },
+    });
+    if (!job) throw new NotFoundException('Vaga não encontrada');
+
+    const skip = (page - 1) * limit;
+
+    const where = {
+      jobId,
+      ...(status ? { status } : {}),
+    };
+
+    const [applications, total] = await Promise.all([
+      this.prisma.application.findMany({
+        where,
+        orderBy: { appliedAt: 'desc' },
+        take: limit,
+        skip,
+        include: {
+          candidate: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              profileAnalyst: true,
+              profileCommunicator: true,
+              profileExecutor: true,
+              profilePlanner: true,
+            },
+          },
+        },
+      }),
+      this.prisma.application.count({ where }),
+    ]);
+
+    return {
+      jobTitle: job.title,
+      data: applications,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page < Math.ceil(total / limit),
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  async findCandidate(jobId: number, applicationId: number, companyId: number) {
+    const job = await this.prisma.job.findFirst({
+      where: { id: jobId, companyId, active: true },
+    });
+    if (!job) throw new NotFoundException('Vaga não encontrada');
+
+    const application = await this.prisma.application.findFirst({
+      where: { id: applicationId, jobId },
+      include: {
+        candidate: {
+          include: {
+            resume: {
+              include: {
+                experiences: true,
+                educations: true,
+                skills: true,
+                languages: true,
+                extras: true,
+              },
+            },
+          },
+        },
+        history: {
+          orderBy: { changedAt: 'desc' },
+        },
+      },
+    });
+    if (!application) throw new NotFoundException('Candidatura não encontrada');
+
+    return application;
+  }
+
+  async updateApplicationStatus(
+    jobId: number,
+    applicationId: number,
+    companyId: number,
+    status: ApplicationStatus,
+    note?: string,
+  ) {
+    const job = await this.prisma.job.findFirst({
+      where: { id: jobId, companyId, active: true },
+    });
+    if (!job) throw new NotFoundException('Vaga não encontrada');
+
+    const application = await this.prisma.application.findFirst({
+      where: { id: applicationId, jobId },
+    });
+    if (!application) throw new NotFoundException('Candidatura não encontrada');
+
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.application.update({
+        where: { id: applicationId },
+        data: { status },
+      }),
+      this.prisma.applicationHistory.create({
+        data: { applicationId, status, note },
+      }),
+    ]);
+
+    return updated;
   }
 
   async getAllBenefits() {

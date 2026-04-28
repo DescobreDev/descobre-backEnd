@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { PrismaClient } from "@prisma/client";
+import * as bcrypt from 'bcrypt';
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
@@ -71,6 +72,86 @@ async function main() {
 
 
   console.log('✅ Planos criados!');
+
+  const hashed = await bcrypt.hash('123456', 10);
+
+  const candidate = await prisma.candidate.create({
+    data: {
+      name: 'João Silva',
+      email: 'joao.silva@email.com',
+      password: hashed,
+      phone: '(11) 99999-9999',
+      birthDate: new Date('1995-06-15'),
+      cpf: '123.456.789-00',
+      isVerified: true,
+
+      profileAnalyst: 3,
+      profileCommunicator: 4,
+      profileExecutor: 2,
+      profilePlanner: 5,
+      profileCompleted: true,
+
+      resume: {
+        create: {
+          isGuided: true,
+          isComplete: true,
+
+          experiences: {
+            create: [
+              {
+                company: 'Tech Solutions',
+                position: 'Analista de Sistemas',
+                description: 'Desenvolvimento e manutenção de sistemas web.',
+                startDate: new Date('2020-01-01'),
+                current: true,
+              },
+            ],
+          },
+
+          educations: {
+            create: [
+              {
+                institution: 'Universidade Anhembi Morumbi',
+                course: 'Sistemas de Informação',
+                level: 'SUPERIOR',
+                startDate: new Date('2015-01-01'),
+                endDate: new Date('2019-12-01'),
+                current: false,
+              },
+            ],
+          },
+
+          skills: {
+            create: [
+              { name: 'JavaScript', level: 'AVANCADO' },
+              { name: 'TypeScript', level: 'INTERMEDIARIO' },
+              { name: 'React', level: 'AVANCADO' },
+            ],
+          },
+
+          languages: {
+            create: [
+              { language: 'Português', level: 'NATIVO' },
+              { language: 'Inglês', level: 'INTERMEDIARIO' },
+            ],
+          },
+
+          extras: {
+            create: [
+              {
+                type: 'CERTIFICADO',
+                title: 'Certificação em Desenvolvimento Web',
+                description: 'Curso avançado de desenvolvimento fullstack',
+                date: new Date('2021-08-10'),
+              },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  console.log('Candidato criado:', candidate.id);
 
 
   const sector_0 = await prisma.sector.upsert({
