@@ -99,18 +99,19 @@ export class GeminiService {
 
     const { title, sector, position, workFormat, city, state } = params;
 
-    const location =
-      workFormat === 'REMOTE' ? 'Brasil (remoto)'
-      : city && state ? `${city}, ${state}`
-      : 'Brasil';
+    // const location =
+    //   workFormat === 'REMOTE' ? 'Brasil (remoto)'
+    //   : city && state ? `${city}, ${state}`
+    //   : 'Brasil';
 
     const prompt = `Você é um especialista em remuneração do mercado brasileiro.
       Estime as faixas salariais mensais em BRL para:
       - Cargo: ${position}
       - Título: ${title}
       - Setor: ${sector}
-      - Localidade: ${location}
+      - Localidade: Cidade Itapetininga
       - Ano: ${new Date().getFullYear()}
+
 
       Baseie-se em dados do Glassdoor BR, LinkedIn Jobs, Catho e Guia Salarial Robert Half.
 
