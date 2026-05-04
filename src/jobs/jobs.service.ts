@@ -2,12 +2,14 @@ import { Injectable, BadRequestException, NotFoundException, ForbiddenException 
 import { ApplicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsageService } from '../usage/usage.service';
+import { GeminiService } from '../gemini/gemini.service';
 
 @Injectable()
 export class JobsService {
   constructor(
     private prisma: PrismaService,
     private usageService: UsageService,
+    private geminiService: GeminiService,
   ) { }
 
   async create(companyId: number, data: any) {
@@ -18,11 +20,9 @@ export class JobsService {
     const {
       benefitIds = [],
       customBenefits = [],
-      sector,
-      position,
-      companyId: _,
       sectorId,
       positionId,
+      companyId: _,
       ...jobData
     } = data;
 
@@ -30,23 +30,43 @@ export class JobsService {
       jobData.deadline = new Date(jobData.deadline);
     }
 
+    const [sector, position] = await Promise.all([
+      this.prisma.sector.findUnique({ where: { id: sectorId } }),
+      this.prisma.position.findUnique({ where: { id: positionId } }),
+    ]);
+
+    const profile = await this.geminiService.generateJobProfile({
+      title: jobData.title,
+      sector: sector?.name ?? '',
+      position: position?.name ?? '',
+      description: jobData.description,
+    });
+
+    console.log(profile);
+
     return this.prisma.job.create({
       data: {
         ...jobData,
-        company: {
-          connect: { id: companyId },
-        },
+        company: { connect: { id: companyId } },
         sectorId,
         positionId,
-
         benefits: {
           create: benefitIds.map((benefitId: number) => ({ benefitId })),
         },
-
         customBenefits,
+        profile: {
+          create: {
+            analyst: profile.analyst,
+            communicator: profile.communicator,
+            executor: profile.executor,
+            planner: profile.planner,
+            priority: profile.priority,
+          },
+        },
       },
       include: {
         benefits: { include: { benefit: true } },
+        profile: true,
       },
     });
   }
@@ -83,7 +103,11 @@ export class JobsService {
   async findCandidates(jobId: number, companyId: number, page = 1, limit = 10, status?: ApplicationStatus) {
     const job = await this.prisma.job.findFirst({
       where: { id: jobId, companyId, active: true },
+      include: {
+        profile: true,
+      },
     });
+
     if (!job) throw new NotFoundException('Vaga não encontrada');
 
     const skip = (page - 1) * limit;
@@ -117,9 +141,23 @@ export class JobsService {
       this.prisma.application.count({ where }),
     ]);
 
+    const dataWithScore = applications.map((app) => {
+      console.log('JOB PROFILE:', job.profile);
+      console.log('CANDIDATE:', app.candidate);
+
+      const compatibility = this.calculateCompatibility(job.profile, app.candidate);
+
+      console.log('RESULT:', compatibility);
+
+      return {
+        ...app,
+        compatibility,
+      };
+    });
+
     return {
       jobTitle: job.title,
-      data: applications,
+      data: dataWithScore,
       pagination: {
         page,
         limit,
@@ -134,6 +172,7 @@ export class JobsService {
   async findCandidate(jobId: number, applicationId: number, companyId: number) {
     const job = await this.prisma.job.findFirst({
       where: { id: jobId, companyId, active: true },
+      include: { profile: true },
     });
     if (!job) throw new NotFoundException('Vaga não encontrada');
 
@@ -153,14 +192,40 @@ export class JobsService {
             },
           },
         },
-        history: {
-          orderBy: { changedAt: 'desc' },
-        },
+        history: { orderBy: { changedAt: 'desc' } },
       },
     });
     if (!application) throw new NotFoundException('Candidatura não encontrada');
 
-    return application;
+    const compatibility = this.calculateCompatibility(job.profile, application.candidate);
+
+    return { ...application, compatibility, jobProfile: job.profile };
+  }
+
+  private calculateCompatibility(jobProfile, candidate) {
+    if (!jobProfile) return 0;
+
+    const safe = (v: number) => v ?? 0;
+    const total = 10;
+
+    const dimensions = [
+      { job: safe(jobProfile.analyst), candidate: safe(candidate.profileAnalyst) },
+      { job: safe(jobProfile.communicator), candidate: safe(candidate.profileCommunicator) },
+      { job: safe(jobProfile.executor), candidate: safe(candidate.profileExecutor) },
+      { job: safe(jobProfile.planner), candidate: safe(candidate.profilePlanner) },
+    ];
+
+    let penalty = 0;
+
+    for (const dim of dimensions) {
+      const diff = Math.abs(dim.job - dim.candidate);
+      const weight = dim.job / total;
+      penalty += diff * weight;
+    }
+
+    const compatibility = (1 - penalty / 5) * 100;
+
+    return Math.max(0, Math.round(compatibility));
   }
 
   async updateApplicationStatus(
@@ -180,7 +245,7 @@ export class JobsService {
     });
     if (!application) throw new NotFoundException('Candidatura não encontrada');
 
-    const [updated] = await this.prisma.$transaction([
+    await this.prisma.$transaction([
       this.prisma.application.update({
         where: { id: applicationId },
         data: { status },
@@ -188,9 +253,16 @@ export class JobsService {
       this.prisma.applicationHistory.create({
         data: { applicationId, status, note },
       }),
+      
+      ...(status === 'APROVADO' ? [
+        this.prisma.job.update({
+          where: { id: jobId },
+          data: { status: 'INACTIVE', active: false },
+        }),
+      ] : []),
     ]);
 
-    return updated;
+    return { success: true };
   }
 
   async getAllBenefits() {
@@ -200,7 +272,10 @@ export class JobsService {
   async findOne(id: number, companyId: number) {
     const job = await this.prisma.job.findUnique({
       where: { id },
-      include: { benefits: { include: { benefit: true } } },
+      include: {
+        benefits: { include: { benefit: true } },
+        profile: true,
+      },
     });
 
     if (!job) throw new NotFoundException('Vaga não encontrada.');

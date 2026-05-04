@@ -128,7 +128,7 @@ model Job {
 model JobProfile {
   id          Int         @id @default(autoincrement())
   jobId       Int         @unique
-  priority    ProfileType // qual perfil a IA priorizou
+  priority    ProfileType
 
   analyst     Int @default(0)
   communicator Int @default(0)
@@ -407,12 +407,12 @@ model ApplicationHistory {
 }
 
 enum ApplicationStatus {
-  RECEBIDA       // Candidatura recebida
-  EM_TRIAGEM     // Em triagem
-  ENTREVISTA     // Entrevista agendada
-  APROVADO       // Aprovado
-  REPROVADO      // Reprovado
-  DESISTIU       // Candidato desistiu
+  RECEBIDA
+  ANALISE
+  ENTREVISTA
+  APROVADO
+  REPROVADO
+  DESISTIU
 }
 
 enum EducationLevel {
