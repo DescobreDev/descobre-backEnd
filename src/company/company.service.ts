@@ -30,7 +30,7 @@ export class CompanyService {
         }
 
         try {
-            const result = await this.prisma.$transaction(async (tx) => {
+            await this.prisma.$transaction(async (tx) => {
                 const company = await tx.company.create({
                     data: {
                         name: data.name,
@@ -41,6 +41,7 @@ export class CompanyService {
                         site: data.site ?? null,
                         cep: data.cep,
                         address: data.address,
+                        district: data.district,
                         number: data.number,
                         complement: data.complement ?? null,
                         city: data.city,
@@ -106,6 +107,7 @@ export class CompanyService {
                     site: data.site ?? null,
                     cep: data.cep,
                     address: data.address,
+                    district: data.district,
                     number: data.number,
                     complement: data.complement ?? null,
                     city: data.city,

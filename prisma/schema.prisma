@@ -37,6 +37,7 @@ enum WorkFormat {
 enum JobStatus {
   ACTIVE
   INACTIVE
+  HIRED
 }
 
 enum ContractType {
@@ -106,7 +107,7 @@ model Job {
   cep          String?
   state        String?
   city         String?
-  neighborhood String?
+  district     String?
   address      String?
   number       String?
   complement   String?
@@ -169,6 +170,7 @@ model Company {
   site       String?
   cep        String
   address    String
+  district   String
   number     String
   complement String?
   city       String
@@ -392,6 +394,7 @@ model Application {
   candidate Candidate            @relation(fields: [candidateId], references: [id])
   job       Job                  @relation(fields: [jobId], references: [id])
   history   ApplicationHistory[]
+  interviewEvents InterviewEvent[]
 
   @@unique([candidateId, jobId])
 }
@@ -402,6 +405,29 @@ model ApplicationHistory {
   status        ApplicationStatus
   note          String?
   changedAt     DateTime          @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id])
+}
+
+enum InterviewEventType {
+  INVITE_SENT
+  CONFIRMED
+  DECLINED
+  RESCHEDULED
+}
+
+model InterviewEvent {
+  id            Int                @id @default(autoincrement())
+  applicationId Int
+  type          InterviewEventType
+  message       String?
+  note          String?
+  meetingLink   String?
+  address       String?
+  scheduledAt   DateTime?
+  interviewType String?
+  proposedAt    DateTime?
+  createdAt     DateTime           @default(now())
 
   application Application @relation(fields: [applicationId], references: [id])
 }

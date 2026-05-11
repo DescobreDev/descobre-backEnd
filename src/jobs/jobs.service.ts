@@ -35,14 +35,17 @@ export class JobsService {
       this.prisma.position.findUnique({ where: { id: positionId } }),
     ]);
 
-    const profile = await this.geminiService.generateJobProfile({
-      title: jobData.title,
-      sector: sector?.name ?? '',
-      position: position?.name ?? '',
-      description: jobData.description,
-    });
-
-    console.log(profile);
+    let profile: { analyst: number; communicator: number; executor: number; planner: number; priority: string } | null = null;
+    try {
+      profile = await this.geminiService.generateJobProfile({
+        title: jobData.title,
+        sector: sector?.name ?? '',
+        position: position?.name ?? '',
+        description: jobData.description,
+      });
+    } catch (err) {
+      console.warn('Falha ao gerar perfil com Gemini, vaga será criada sem perfil.', err?.message);
+    }
 
     return this.prisma.job.create({
       data: {
@@ -54,15 +57,17 @@ export class JobsService {
           create: benefitIds.map((benefitId: number) => ({ benefitId })),
         },
         customBenefits,
-        profile: {
-          create: {
-            analyst: profile.analyst,
-            communicator: profile.communicator,
-            executor: profile.executor,
-            planner: profile.planner,
-            priority: profile.priority,
+        ...(profile && {
+          profile: {
+            create: {
+              analyst: profile.analyst,
+              communicator: profile.communicator,
+              executor: profile.executor,
+              planner: profile.planner,
+              priority: profile.priority,
+            },
           },
-        },
+        }),
       },
       include: {
         benefits: { include: { benefit: true } },
@@ -102,16 +107,13 @@ export class JobsService {
 
   async findCandidates(jobId: number, companyId: number, page = 1, limit = 10, status?: ApplicationStatus) {
     const job = await this.prisma.job.findFirst({
-      where: { id: jobId, companyId, active: true },
-      include: {
-        profile: true,
-      },
+      where: { id: jobId, companyId },
+      include: { profile: true },
     });
 
     if (!job) throw new NotFoundException('Vaga não encontrada');
 
     const skip = (page - 1) * limit;
-
     const where = {
       jobId,
       ...(status ? { status } : {}),
@@ -126,14 +128,9 @@ export class JobsService {
         include: {
           candidate: {
             select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              profileAnalyst: true,
-              profileCommunicator: true,
-              profileExecutor: true,
-              profilePlanner: true,
+              id: true, name: true, email: true, phone: true,
+              profileAnalyst: true, profileCommunicator: true,
+              profileExecutor: true, profilePlanner: true,
             },
           },
         },
@@ -141,27 +138,35 @@ export class JobsService {
       this.prisma.application.count({ where }),
     ]);
 
-    const dataWithScore = applications.map((app) => {
-      console.log('JOB PROFILE:', job.profile);
-      console.log('CANDIDATE:', app.candidate);
+    const dataWithScore = applications.map((app) => ({
+      ...app,
+      compatibility: this.calculateCompatibility(job.profile, app.candidate),
+    }));
 
-      const compatibility = this.calculateCompatibility(job.profile, app.candidate);
-
-      console.log('RESULT:', compatibility);
-
-      return {
-        ...app,
-        compatibility,
-      };
-    });
+    const hiredApplication = job.status === 'HIRED'
+      ? await this.prisma.application.findFirst({
+        where: { jobId, status: 'APROVADO' },
+        include: {
+          candidate: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { updatedAt: 'desc' },
+      })
+      : null;
 
     return {
       jobTitle: job.title,
+      jobStatus: job.status,
+      hiredCandidate: hiredApplication
+        ? {
+          id: hiredApplication.id,
+          name: hiredApplication.candidate.name,
+          email: hiredApplication.candidate.email,
+          hiredAt: hiredApplication.updatedAt,
+        }
+        : null,
       data: dataWithScore,
       pagination: {
-        page,
-        limit,
-        total,
+        page, limit, total,
         totalPages: Math.ceil(total / limit),
         hasNext: page < Math.ceil(total / limit),
         hasPrev: page > 1,
@@ -171,9 +176,10 @@ export class JobsService {
 
   async findCandidate(jobId: number, applicationId: number, companyId: number) {
     const job = await this.prisma.job.findFirst({
-      where: { id: jobId, companyId, active: true },
+      where: { id: jobId, companyId },
       include: { profile: true },
     });
+
     if (!job) throw new NotFoundException('Vaga não encontrada');
 
     const application = await this.prisma.application.findFirst({
@@ -193,13 +199,15 @@ export class JobsService {
           },
         },
         history: { orderBy: { changedAt: 'desc' } },
+        interviewEvents: { orderBy: { createdAt: 'asc' } },
       },
     });
+
     if (!application) throw new NotFoundException('Candidatura não encontrada');
 
     const compatibility = this.calculateCompatibility(job.profile, application.candidate);
 
-    return { ...application, compatibility, jobProfile: job.profile };
+    return { ...application, compatibility, jobProfile: job.profile, jobStatus: job.status };
   }
 
   private calculateCompatibility(jobProfile, candidate) {
@@ -234,6 +242,12 @@ export class JobsService {
     companyId: number,
     status: ApplicationStatus,
     note?: string,
+    interviewData?: {
+      type: 'presencial' | 'online';
+      scheduledAt: Date;
+      meetingLink?: string;
+      address?: string;
+    },
   ) {
     const job = await this.prisma.job.findFirst({
       where: { id: jobId, companyId, active: true },
@@ -245,24 +259,83 @@ export class JobsService {
     });
     if (!application) throw new NotFoundException('Candidatura não encontrada');
 
-    await this.prisma.$transaction([
-      this.prisma.application.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.application.update({
         where: { id: applicationId },
         data: { status },
-      }),
-      this.prisma.applicationHistory.create({
-        data: { applicationId, status, note },
-      }),
-      
-      ...(status === 'APROVADO' ? [
-        this.prisma.job.update({
+      });
+
+      await tx.applicationHistory.create({
+        data: {
+          applicationId,
+          status,
+          note: status !== 'ENTREVISTA' ? note : undefined,
+        },
+      });
+
+      if (status === 'ENTREVISTA' && interviewData) {
+        await tx.interviewEvent.create({
+          data: {
+            applicationId,
+            type: 'INVITE_SENT',
+            scheduledAt: new Date(interviewData.scheduledAt),
+            meetingLink: interviewData.meetingLink ?? null,
+            address: interviewData.address ?? null,
+            interviewType: interviewData.type,
+            message: note ?? null,
+          },
+        });
+      }
+
+      if (status === 'APROVADO') {
+        await tx.job.update({
           where: { id: jobId },
-          data: { status: 'INACTIVE', active: false },
-        }),
-      ] : []),
-    ]);
+          data: { status: 'HIRED', active: false },
+        });
+
+        const pending = await tx.application.findMany({
+          where: {
+            jobId,
+            id: { not: applicationId },
+            status: { notIn: ['REPROVADO', 'DESISTIU', 'APROVADO'] },
+          },
+          select: { id: true, status: true },
+        });
+
+        if (pending.length > 0) {
+          await tx.application.updateMany({
+            where: { id: { in: pending.map(a => a.id) } },
+            data: { status: 'RECEBIDA' },
+          });
+
+          await tx.applicationHistory.createMany({
+            data: pending.map(a => ({
+              applicationId: a.id,
+              status: 'RECEBIDA' as ApplicationStatus,
+              note: 'Vaga encerrada por contratação',
+            })),
+          });
+        }
+      }
+    });
 
     return { success: true };
+  }
+
+  async respondToInterview(
+    applicationId: number,
+    response: 'CONFIRMED' | 'DECLINED' | 'RESCHEDULED',
+    note?: string,
+    proposedAt?: Date,
+  ) {
+    return this.prisma.interviewEvent.create({
+      data: {
+        applicationId,
+        type: response,
+        note,
+        proposedAt,
+      },
+    });
   }
 
   async getAllBenefits() {
@@ -281,13 +354,8 @@ export class JobsService {
     if (!job) throw new NotFoundException('Vaga não encontrada.');
     if (job.companyId !== companyId) throw new ForbiddenException('Sem permissão.');
 
-    const sector = await this.prisma.sector.findUnique({
-      where: { id: job.sectorId },
-    });
-
-    const position = await this.prisma.position.findUnique({
-      where: { id: job.positionId },
-    });
+    const sector = await this.prisma.sector.findUnique({ where: { id: job.sectorId } });
+    const position = await this.prisma.position.findUnique({ where: { id: job.positionId } });
 
     return [job, sector, position];
   }
@@ -348,6 +416,32 @@ export class JobsService {
         if (!subscription || !subscription.active) {
           throw new BadRequestException('Empresa sem plano ativo.');
         }
+
+        const wasHired = job.status === 'HIRED';
+
+        const applications = await tx.application.findMany({
+          where: { jobId: id },
+          select: { id: true, status: true },
+        });
+
+        const toReset = applications.filter(a => a.status !== 'RECEBIDA');
+
+        if (toReset.length > 0) {
+          await tx.application.updateMany({
+            where: { jobId: id, id: { in: toReset.map(a => a.id) } },
+            data: { status: 'RECEBIDA' },
+          });
+
+          await tx.applicationHistory.createMany({
+            data: toReset.map(a => ({
+              applicationId: a.id,
+              status: 'RECEBIDA' as ApplicationStatus,
+              note: wasHired
+                ? `Vaga reaberta após contratação — processo reiniciado (status anterior: ${a.status})`
+                : `Vaga reaberta — processo reiniciado (status anterior: ${a.status})`,
+            })),
+          });
+        }
       }
 
       return tx.job.update({
@@ -380,10 +474,7 @@ export class JobsService {
 
   async findAllSector() {
     return this.prisma.sector.findMany({
-      select: {
-        id: true,
-        name: true,
-      },
+      select: { id: true, name: true },
       orderBy: { name: 'asc' },
     });
   }
@@ -395,18 +486,13 @@ export class JobsService {
         id: true,
         name: true,
         positions: {
-          select: {
-            id: true,
-            name: true,
-          },
+          select: { id: true, name: true },
           orderBy: { name: 'asc' },
         },
       },
     });
 
-    if (!sector) {
-      throw new NotFoundException(`Área ${sectorId} não encontrada`);
-    }
+    if (!sector) throw new NotFoundException(`Área ${sectorId} não encontrada`);
 
     return sector;
   }

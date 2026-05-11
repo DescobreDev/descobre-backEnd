@@ -55,17 +55,51 @@ export class JobsController {
   }
 
   @Get(':id/candidates')
-  findCandidates(@Param('id') id: string, @Request() req, @Query('page') page = '1', @Query('limit') limit = '10', @Query('status') status?: ApplicationStatus,) {
-    return this.jobsService.findCandidates(+id, req.user.companyId, +page, +limit, status,);
+  findCandidates(
+    @Param('id') id: string,
+    @Request() req,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('status') status?: ApplicationStatus,
+  ) {
+    return this.jobsService.findCandidates(+id, req.user.companyId, +page, +limit, status);
   }
 
   @Get(':id/candidates/:applicationId')
-  findCandidate(@Param('id') jobId: string, @Param('applicationId') applicationId: string, @Request() req,) {
+  findCandidate(
+    @Param('id') jobId: string,
+    @Param('applicationId') applicationId: string,
+    @Request() req,
+  ) {
     return this.jobsService.findCandidate(+jobId, +applicationId, req.user.companyId);
   }
 
   @Patch(':id/candidates/:applicationId/status')
-  updateApplicationStatus(@Param('id') jobId: string, @Param('applicationId') applicationId: string, @Body('status') status: ApplicationStatus, @Body('note') note: string, @Request() req,) {
-    return this.jobsService.updateApplicationStatus(+jobId, +applicationId, req.user.companyId, status, note);
+  updateApplicationStatus(
+    @Param('id') jobId: string,
+    @Param('applicationId') applicationId: string,
+    @Body('status') status: ApplicationStatus,
+    @Body('note') note: string,
+    @Body('interviewData') interviewData: {
+      type: 'presencial' | 'online';
+      scheduledAt: Date;
+      meetingLink?: string;
+      address?: string;
+    },
+    @Request() req,
+  ) {
+    return this.jobsService.updateApplicationStatus(
+      +jobId,
+      +applicationId,
+      req.user.companyId,
+      status,
+      note,
+      interviewData,
+    );
+  }
+
+  @Patch(':id/candidates/:applicationId/interview-response')
+  respondToInterview(@Param('applicationId') applicationId: string, @Body() body) {
+    return this.jobsService.respondToInterview(+applicationId, body.status, body.note, body.proposedAt);
   }
 }

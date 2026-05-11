@@ -73,16 +73,16 @@ async function main() {
 
   console.log('✅ Planos criados!');
 
-  const hashed = await bcrypt.hash('123456', 10);
+  const hashed33 = await bcrypt.hash('5656456456', 10);
 
   const candidate = await prisma.candidate.create({
     data: {
-      name: 'João Silva',
-      email: 'joao.silva@email.com',
-      password: hashed,
+      name: 'kleber',
+      email: 'kleber.silva@email.com',
+      password: hashed33,
       phone: '(11) 99999-9999',
       birthDate: new Date('1995-06-15'),
-      cpf: '123.456.789-00',
+      cpf: '123.456.789-35',
       isVerified: true,
 
       profileAnalyst: 3,
@@ -151,8 +151,270 @@ async function main() {
     },
   });
 
-  console.log('Candidato criado:', candidate.id);
+  const hashed44 = await bcrypt.hash('5656456456', 10);
 
+  await prisma.candidate.createMany({
+    data: [],
+  });
+
+  await prisma.candidate.create({
+    data: {
+      name: 'Mariana Costa',
+      email: 'mariana.costa@email.com',
+      password: hashed44,
+      phone: '(11) 98888-1111',
+      birthDate: new Date('1992-03-20'),
+      cpf: '123.456.789-11',
+      isVerified: true,
+
+      profileAnalyst: 5,
+      profileCommunicator: 3,
+      profileExecutor: 2,
+      profilePlanner: 4,
+      profileCompleted: true,
+
+      resume: {
+        create: {
+          isGuided: true,
+          isComplete: true,
+
+          experiences: {
+            create: [
+              {
+                company: 'Banco Digital X',
+                position: 'Product Owner',
+                description: 'Gestão de produtos digitais.',
+                startDate: new Date('2019-02-01'),
+                current: true,
+              },
+            ],
+          },
+
+          educations: {
+            create: [
+              {
+                institution: 'PUC-SP',
+                course: 'Administração',
+                level: 'SUPERIOR',
+                startDate: new Date('2011-01-01'),
+                endDate: new Date('2015-12-01'),
+                current: false,
+              },
+            ],
+          },
+
+          skills: {
+            create: [
+              { name: 'Scrum', level: 'AVANCADO' },
+              { name: 'Jira', level: 'AVANCADO' },
+              { name: 'Analytics', level: 'INTERMEDIARIO' },
+            ],
+          },
+
+          languages: {
+            create: [
+              { language: 'Português', level: 'NATIVO' },
+              { language: 'Inglês', level: 'AVANCADO' },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  await prisma.candidate.create({
+    data: {
+      name: 'Carlos Mendes',
+      email: 'carlos.mendes@email.com',
+      password: hashed44,
+      phone: '(11) 97777-2222',
+      birthDate: new Date('1988-09-12'),
+      cpf: '123.456.789-22',
+      isVerified: true,
+
+      profileAnalyst: 2,
+      profileCommunicator: 2,
+      profileExecutor: 5,
+      profilePlanner: 3,
+      profileCompleted: true,
+
+      resume: {
+        create: {
+          isGuided: true,
+          isComplete: true,
+
+          experiences: {
+            create: [
+              {
+                company: 'Metalúrgica Forte',
+                position: 'Supervisor Operacional',
+                description: 'Gestão de equipe operacional.',
+                startDate: new Date('2017-04-01'),
+                current: true,
+              },
+            ],
+          },
+
+          educations: {
+            create: [
+              {
+                institution: 'SENAI',
+                course: 'Gestão Industrial',
+                level: 'TECNICO',
+                startDate: new Date('2010-01-01'),
+                endDate: new Date('2012-12-01'),
+                current: false,
+              },
+            ],
+          },
+
+          skills: {
+            create: [
+              { name: 'Lean', level: 'AVANCADO' },
+              { name: 'Excel', level: 'INTERMEDIARIO' },
+            ],
+          },
+
+          languages: {
+            create: [
+              { language: 'Português', level: 'NATIVO' },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  await prisma.candidate.create({
+    data: {
+      name: 'Fernanda Rocha',
+      email: 'fernanda.rocha@email.com',
+      password: hashed44,
+      phone: '(11) 96666-3333',
+      birthDate: new Date('1997-11-05'),
+      cpf: '123.456.789-33',
+      isVerified: true,
+
+      profileAnalyst: 3,
+      profileCommunicator: 5,
+      profileExecutor: 4,
+      profilePlanner: 2,
+      profileCompleted: true,
+
+      resume: {
+        create: {
+          isGuided: true,
+          isComplete: true,
+
+          experiences: {
+            create: [
+              {
+                company: 'Agência Criativa',
+                position: 'Social Media',
+                description: 'Planejamento e gestão de redes sociais.',
+                startDate: new Date('2021-01-01'),
+                current: true,
+              },
+            ],
+          },
+
+          educations: {
+            create: [
+              {
+                institution: 'Mackenzie',
+                course: 'Marketing',
+                level: 'SUPERIOR',
+                startDate: new Date('2016-01-01'),
+                endDate: new Date('2020-12-01'),
+                current: false,
+              },
+            ],
+          },
+
+          skills: {
+            create: [
+              { name: 'Meta Ads', level: 'AVANCADO' },
+              { name: 'Copywriting', level: 'AVANCADO' },
+            ],
+          },
+
+          languages: {
+            create: [
+              { language: 'Português', level: 'NATIVO' },
+              { language: 'Espanhol', level: 'INTERMEDIARIO' },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  await prisma.candidate.create({
+    data: {
+      name: 'Ricardo Alves',
+      email: 'ricardo.alves@email.com',
+      password: hashed44,
+      phone: '(11) 95555-4444',
+      birthDate: new Date('1990-07-28'),
+      cpf: '123.456.789-44',
+      isVerified: true,
+
+      profileAnalyst: 4,
+      profileCommunicator: 2,
+      profileExecutor: 4,
+      profilePlanner: 5,
+      profileCompleted: true,
+
+      resume: {
+        create: {
+          isGuided: true,
+          isComplete: true,
+
+          experiences: {
+            create: [
+              {
+                company: 'Dev Software House',
+                position: 'Tech Lead',
+                description: 'Arquitetura e liderança técnica.',
+                startDate: new Date('2018-06-01'),
+                current: true,
+              },
+            ],
+          },
+
+          educations: {
+            create: [
+              {
+                institution: 'FIAP',
+                course: 'Engenharia de Software',
+                level: 'SUPERIOR',
+                startDate: new Date('2009-01-01'),
+                endDate: new Date('2013-12-01'),
+                current: false,
+              },
+            ],
+          },
+
+          skills: {
+            create: [
+              { name: 'Node.js', level: 'AVANCADO' },
+              { name: 'React', level: 'AVANCADO' },
+              { name: 'AWS', level: 'INTERMEDIARIO' },
+            ],
+          },
+
+          languages: {
+            create: [
+              { language: 'Português', level: 'NATIVO' },
+              { language: 'Inglês', level: 'AVANCADO' },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  console.log('Candidato criado:', candidate.id);
 
   const sector_0 = await prisma.sector.upsert({
     where: { name: 'Academias' },

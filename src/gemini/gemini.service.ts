@@ -77,7 +77,6 @@ export class GeminiService {
 
       return result.response.text();
     } catch (error) {
-      // Desfaz o incremento se a chamada à IA falhar
       await this.usageService.decrement(companyId, 'aiResumeUsed');
       console.error('Erro detalhado da API Gemini:', error);
       throw new InternalServerErrorException('Falha ao gerar o resumo da vaga.');

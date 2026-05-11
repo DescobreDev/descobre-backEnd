@@ -10,9 +10,10 @@ import { UsageModule } from './usage/usage.module';
 import { JobsModule } from './jobs/jobs.module';
 import { PaymentsModule } from './payments/payments.module';
 import { GeminiModule } from './gemini/gemini.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, UsageModule, JobsModule, PaymentsModule, GeminiModule],
+  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, UsageModule, JobsModule, PaymentsModule, GeminiModule, DashboardModule],
   controllers: [AppController],
   providers: [AppService],
 })

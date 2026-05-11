@@ -35,6 +35,9 @@ export class CreateCompanyDto {
   address: string;
 
   @IsString()
+  district: string;
+
+  @IsString()
   number: string;
 
   @IsOptional()
