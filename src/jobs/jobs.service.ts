@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { ApplicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsageService } from '../usage/usage.service';
@@ -103,6 +103,13 @@ export class JobsService {
         hasPrev: page > 1,
       },
     };
+  }
+
+  async findAllCandidates() {
+    return this.prisma.candidate.findMany({
+      select: { id: true, name: true, email: true },
+      orderBy: { name: 'asc' },
+    });
   }
 
   async findCandidates(jobId: number, companyId: number, page = 1, limit = 10, status?: ApplicationStatus) {
@@ -495,5 +502,43 @@ export class JobsService {
     if (!sector) throw new NotFoundException(`Área ${sectorId} não encontrada`);
 
     return sector;
+  }
+
+  async attachCandidate(jobId: number, candidateId: number, companyId: number) {
+    const job = await this.prisma.job.findFirst({
+      where: {
+        id: jobId,
+        companyId,
+        // removido active: true para ambiente de teste
+      },
+    });
+
+    if (!job) throw new NotFoundException('Vaga não encontrada');
+
+    const candidate = await this.prisma.candidate.findUnique({
+      where: { id: candidateId },
+    });
+
+    if (!candidate) throw new NotFoundException('Candidato não encontrado');
+
+    const exists = await this.prisma.application.findUnique({
+      where: { candidateId_jobId: { candidateId, jobId } },
+    });
+
+    if (exists) throw new ConflictException('Candidato já está na vaga');
+
+    return this.prisma.application.create({
+      data: {
+        jobId,
+        candidateId,
+        history: {
+          create: {
+            status: 'RECEBIDA',
+            note: 'Candidato adicionado manualmente',
+          },
+        },
+      },
+      include: { candidate: true },
+    });
   }
 }

@@ -34,6 +34,11 @@ export class JobsController {
     return this.jobsService.findPositionsBySector(id);
   }
 
+  @Get('test/candidates')
+  findAllCandidates() {
+    return this.jobsService.findAllCandidates();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {
     return this.jobsService.findOne(+id, req.user.companyId);
@@ -101,5 +106,14 @@ export class JobsController {
   @Patch(':id/candidates/:applicationId/interview-response')
   respondToInterview(@Param('applicationId') applicationId: string, @Body() body) {
     return this.jobsService.respondToInterview(+applicationId, body.status, body.note, body.proposedAt);
+  }
+
+  @Post(':id/candidates')
+  attachCandidate(
+    @Param('id') jobId: string,
+    @Body('candidateId') candidateId: string,
+    @Request() req,
+  ) {
+    return this.jobsService.attachCandidate(+jobId, +candidateId, req.user.companyId);
   }
 }
