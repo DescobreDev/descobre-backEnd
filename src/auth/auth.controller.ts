@@ -1,10 +1,10 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { VerifyEmailDto, ResendCodeDto } from './auth.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register')
   async register(@Body() body: any) {
@@ -26,5 +26,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   resendCode(@Body() body: ResendCodeDto) {
     return this.authService.resendCode(body);
+  }
+
+  @Get("health")
+  health() {
+    return { ok: true };
   }
 }
