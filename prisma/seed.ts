@@ -31,391 +31,463 @@ const BENEFITS = [
 ];
 
 async function main() {
-  // Planos
-  await prisma.plan.createMany({
-    data: [
-      {
-        name: 'Bronze',
-        description: 'Ideal para pequenas empresas que estão começando.',
-        price: 219.95,
-        annualPrice: 2500.00,
-        maxJobs: 5,
-        maxAiResume: 5,
-        maxAiSalary: 5,
-        maxInterviews: 5,
-        recommended: false,
-      },
-      {
-        name: 'Prata',
-        description: 'Ideal para empresas de porte médio.',
-        price: 579.95,
-        annualPrice: 6600.00,
-        maxJobs: 70,
-        maxAiResume: 80,
-        maxAiSalary: 80,
-        maxInterviews: 80,
-        recommended: true,
-      },
-      {
-        name: 'Ouro',
-        description: 'Plano ideal para quem possui grandes corporações.',
-        price: 1399.95,
-        annualPrice: 15900.00,
-        maxJobs: 300,
-        maxAiResume: 400,
-        maxAiSalary: 400,
-        maxInterviews: 400,
-        recommended: false,
-      },
-    ],
-    skipDuplicates: true,
-  });
+  // // Planos
+  // await prisma.plan.createMany({
+  //   data: [
+  //     {
+  //       name: 'Bronze',
+  //       description: 'Ideal para pequenas empresas que estão começando.',
+  //       price: 219.95,
+  //       annualPrice: 2500.00,
+  //       maxJobs: 5,
+  //       maxAiResume: 5,
+  //       maxAiSalary: 5,
+  //       maxInterviews: 5,
+  //       recommended: false,
+  //     },
+  //     {
+  //       name: 'Prata',
+  //       description: 'Ideal para empresas de porte médio.',
+  //       price: 579.95,
+  //       annualPrice: 6600.00,
+  //       maxJobs: 70,
+  //       maxAiResume: 80,
+  //       maxAiSalary: 80,
+  //       maxInterviews: 80,
+  //       recommended: true,
+  //     },
+  //     {
+  //       name: 'Ouro',
+  //       description: 'Plano ideal para quem possui grandes corporações.',
+  //       price: 1399.95,
+  //       annualPrice: 15900.00,
+  //       maxJobs: 300,
+  //       maxAiResume: 400,
+  //       maxAiSalary: 400,
+  //       maxInterviews: 400,
+  //       recommended: false,
+  //     },
+  //   ],
+  //   skipDuplicates: true,
+  // });
 
 
-  console.log('✅ Planos criados!');
+  // console.log('✅ Planos criados!');
 
-  const hashed33 = await bcrypt.hash('5656456456', 10);
+  // const hashed33 = await bcrypt.hash('5656456456', 10);
 
-  const candidate = await prisma.candidate.create({
-    data: {
-      name: 'kleber',
-      email: 'kleber.silva@email.com',
-      password: hashed33,
-      phone: '(11) 99999-9999',
-      birthDate: new Date('1995-06-15'),
-      cpf: '123.456.789-35',
-      isVerified: true,
+  // const candidate = await prisma.candidate.create({
+  //   data: {
+  //     name: 'kleber',
+  //     email: 'kleber.silva@email.com',
+  //     password: hashed33,
+  //     phone: '(11) 99999-9999',
+  //     birthDate: new Date('1995-06-15'),
+  //     cpf: '123.456.789-35',
+  //     isVerified: true,
 
-      profileAnalyst: 3,
-      profileCommunicator: 4,
-      profileExecutor: 2,
-      profilePlanner: 5,
-      profileCompleted: true,
+  //     profileAnalyst: 3,
+  //     profileCommunicator: 4,
+  //     profileExecutor: 2,
+  //     profilePlanner: 5,
+  //     profileCompleted: true,
 
-      resume: {
-        create: {
-          isGuided: true,
-          isComplete: true,
+  //     resume: {
+  //       create: {
+  //         isGuided: true,
+  //         isComplete: true,
 
-          experiences: {
-            create: [
-              {
-                company: 'Tech Solutions',
-                position: 'Analista de Sistemas',
-                description: 'Desenvolvimento e manutenção de sistemas web.',
-                startDate: new Date('2020-01-01'),
-                current: true,
-              },
-            ],
-          },
+  //         experiences: {
+  //           create: [
+  //             {
+  //               company: 'Tech Solutions',
+  //               position: 'Analista de Sistemas',
+  //               description: 'Desenvolvimento e manutenção de sistemas web.',
+  //               startDate: new Date('2020-01-01'),
+  //               current: true,
+  //             },
+  //           ],
+  //         },
 
-          educations: {
-            create: [
-              {
-                institution: 'Universidade Anhembi Morumbi',
-                course: 'Sistemas de Informação',
-                level: 'SUPERIOR',
-                startDate: new Date('2015-01-01'),
-                endDate: new Date('2019-12-01'),
-                current: false,
-              },
-            ],
-          },
+  //         educations: {
+  //           create: [
+  //             {
+  //               institution: 'Universidade Anhembi Morumbi',
+  //               course: 'Sistemas de Informação',
+  //               level: 'SUPERIOR',
+  //               startDate: new Date('2015-01-01'),
+  //               endDate: new Date('2019-12-01'),
+  //               current: false,
+  //             },
+  //           ],
+  //         },
 
-          skills: {
-            create: [
-              { name: 'JavaScript', level: 'AVANCADO' },
-              { name: 'TypeScript', level: 'INTERMEDIARIO' },
-              { name: 'React', level: 'AVANCADO' },
-            ],
-          },
+  //         skills: {
+  //           create: [
+  //             { name: 'JavaScript', level: 'AVANCADO' },
+  //             { name: 'TypeScript', level: 'INTERMEDIARIO' },
+  //             { name: 'React', level: 'AVANCADO' },
+  //           ],
+  //         },
 
-          languages: {
-            create: [
-              { language: 'Português', level: 'NATIVO' },
-              { language: 'Inglês', level: 'INTERMEDIARIO' },
-            ],
-          },
+  //         languages: {
+  //           create: [
+  //             { language: 'Português', level: 'NATIVO' },
+  //             { language: 'Inglês', level: 'INTERMEDIARIO' },
+  //           ],
+  //         },
 
-          extras: {
-            create: [
-              {
-                type: 'CERTIFICADO',
-                title: 'Certificação em Desenvolvimento Web',
-                description: 'Curso avançado de desenvolvimento fullstack',
-                date: new Date('2021-08-10'),
-              },
-            ],
-          },
-        },
-      },
-    },
-  });
+  //         extras: {
+  //           create: [
+  //             {
+  //               type: 'CERTIFICADO',
+  //               title: 'Certificação em Desenvolvimento Web',
+  //               description: 'Curso avançado de desenvolvimento fullstack',
+  //               date: new Date('2021-08-10'),
+  //             },
+  //           ],
+  //         },
+  //       },
+  //     },
+  //   },
+  // });
 
-  const hashed44 = await bcrypt.hash('5656456456', 10);
+  // const hashed44 = await bcrypt.hash('5656456456', 10);
 
-  await prisma.candidate.createMany({
-    data: [],
-  });
+  // await prisma.candidate.createMany({
+  //   data: [],
+  // });
 
-  await prisma.candidate.create({
-    data: {
-      name: 'Mariana Costa',
-      email: 'mariana.costa@email.com',
-      password: hashed44,
-      phone: '(11) 98888-1111',
-      birthDate: new Date('1992-03-20'),
-      cpf: '123.456.789-11',
-      isVerified: true,
+  // await prisma.candidate.create({
+  //   data: {
+  //     name: 'Mariana Costa',
+  //     email: 'mariana.costa@email.com',
+  //     password: hashed44,
+  //     phone: '(11) 98888-1111',
+  //     birthDate: new Date('1992-03-20'),
+  //     cpf: '123.456.789-11',
+  //     isVerified: true,
 
-      profileAnalyst: 5,
-      profileCommunicator: 3,
-      profileExecutor: 2,
-      profilePlanner: 4,
-      profileCompleted: true,
+  //     profileAnalyst: 5,
+  //     profileCommunicator: 3,
+  //     profileExecutor: 2,
+  //     profilePlanner: 4,
+  //     profileCompleted: true,
 
-      resume: {
-        create: {
-          isGuided: true,
-          isComplete: true,
+  //     resume: {
+  //       create: {
+  //         isGuided: true,
+  //         isComplete: true,
 
-          experiences: {
-            create: [
-              {
-                company: 'Banco Digital X',
-                position: 'Product Owner',
-                description: 'Gestão de produtos digitais.',
-                startDate: new Date('2019-02-01'),
-                current: true,
-              },
-            ],
-          },
+  //         experiences: {
+  //           create: [
+  //             {
+  //               company: 'Banco Digital X',
+  //               position: 'Product Owner',
+  //               description: 'Gestão de produtos digitais.',
+  //               startDate: new Date('2019-02-01'),
+  //               current: true,
+  //             },
+  //           ],
+  //         },
 
-          educations: {
-            create: [
-              {
-                institution: 'PUC-SP',
-                course: 'Administração',
-                level: 'SUPERIOR',
-                startDate: new Date('2011-01-01'),
-                endDate: new Date('2015-12-01'),
-                current: false,
-              },
-            ],
-          },
+  //         educations: {
+  //           create: [
+  //             {
+  //               institution: 'PUC-SP',
+  //               course: 'Administração',
+  //               level: 'SUPERIOR',
+  //               startDate: new Date('2011-01-01'),
+  //               endDate: new Date('2015-12-01'),
+  //               current: false,
+  //             },
+  //           ],
+  //         },
 
-          skills: {
-            create: [
-              { name: 'Scrum', level: 'AVANCADO' },
-              { name: 'Jira', level: 'AVANCADO' },
-              { name: 'Analytics', level: 'INTERMEDIARIO' },
-            ],
-          },
+  //         skills: {
+  //           create: [
+  //             { name: 'Scrum', level: 'AVANCADO' },
+  //             { name: 'Jira', level: 'AVANCADO' },
+  //             { name: 'Analytics', level: 'INTERMEDIARIO' },
+  //           ],
+  //         },
 
-          languages: {
-            create: [
-              { language: 'Português', level: 'NATIVO' },
-              { language: 'Inglês', level: 'AVANCADO' },
-            ],
-          },
-        },
-      },
-    },
-  });
+  //         languages: {
+  //           create: [
+  //             { language: 'Português', level: 'NATIVO' },
+  //             { language: 'Inglês', level: 'AVANCADO' },
+  //           ],
+  //         },
+  //       },
+  //     },
+  //   },
+  // });
 
-  await prisma.candidate.create({
-    data: {
-      name: 'Carlos Mendes',
-      email: 'carlos.mendes@email.com',
-      password: hashed44,
-      phone: '(11) 97777-2222',
-      birthDate: new Date('1988-09-12'),
-      cpf: '123.456.789-22',
-      isVerified: true,
+  // await prisma.candidate.create({
+  //   data: {
+  //     name: 'Carlos Mendes',
+  //     email: 'carlos.mendes@email.com',
+  //     password: hashed44,
+  //     phone: '(11) 97777-2222',
+  //     birthDate: new Date('1988-09-12'),
+  //     cpf: '123.456.789-22',
+  //     isVerified: true,
 
-      profileAnalyst: 2,
-      profileCommunicator: 2,
-      profileExecutor: 5,
-      profilePlanner: 3,
-      profileCompleted: true,
+  //     profileAnalyst: 2,
+  //     profileCommunicator: 2,
+  //     profileExecutor: 5,
+  //     profilePlanner: 3,
+  //     profileCompleted: true,
 
-      resume: {
-        create: {
-          isGuided: true,
-          isComplete: true,
+  //     resume: {
+  //       create: {
+  //         isGuided: true,
+  //         isComplete: true,
 
-          experiences: {
-            create: [
-              {
-                company: 'Metalúrgica Forte',
-                position: 'Supervisor Operacional',
-                description: 'Gestão de equipe operacional.',
-                startDate: new Date('2017-04-01'),
-                current: true,
-              },
-            ],
-          },
+  //         experiences: {
+  //           create: [
+  //             {
+  //               company: 'Metalúrgica Forte',
+  //               position: 'Supervisor Operacional',
+  //               description: 'Gestão de equipe operacional.',
+  //               startDate: new Date('2017-04-01'),
+  //               current: true,
+  //             },
+  //           ],
+  //         },
 
-          educations: {
-            create: [
-              {
-                institution: 'SENAI',
-                course: 'Gestão Industrial',
-                level: 'TECNICO',
-                startDate: new Date('2010-01-01'),
-                endDate: new Date('2012-12-01'),
-                current: false,
-              },
-            ],
-          },
+  //         educations: {
+  //           create: [
+  //             {
+  //               institution: 'SENAI',
+  //               course: 'Gestão Industrial',
+  //               level: 'TECNICO',
+  //               startDate: new Date('2010-01-01'),
+  //               endDate: new Date('2012-12-01'),
+  //               current: false,
+  //             },
+  //           ],
+  //         },
 
-          skills: {
-            create: [
-              { name: 'Lean', level: 'AVANCADO' },
-              { name: 'Excel', level: 'INTERMEDIARIO' },
-            ],
-          },
+  //         skills: {
+  //           create: [
+  //             { name: 'Lean', level: 'AVANCADO' },
+  //             { name: 'Excel', level: 'INTERMEDIARIO' },
+  //           ],
+  //         },
 
-          languages: {
-            create: [
-              { language: 'Português', level: 'NATIVO' },
-            ],
-          },
-        },
-      },
-    },
-  });
+  //         languages: {
+  //           create: [
+  //             { language: 'Português', level: 'NATIVO' },
+  //           ],
+  //         },
+  //       },
+  //     },
+  //   },
+  // });
 
-  await prisma.candidate.create({
-    data: {
-      name: 'Fernanda Rocha',
-      email: 'fernanda.rocha@email.com',
-      password: hashed44,
-      phone: '(11) 96666-3333',
-      birthDate: new Date('1997-11-05'),
-      cpf: '123.456.789-33',
-      isVerified: true,
+  // await prisma.candidate.create({
+  //   data: {
+  //     name: 'Fernanda Rocha',
+  //     email: 'fernanda.rocha@email.com',
+  //     password: hashed44,
+  //     phone: '(11) 96666-3333',
+  //     birthDate: new Date('1997-11-05'),
+  //     cpf: '123.456.789-33',
+  //     isVerified: true,
 
-      profileAnalyst: 3,
-      profileCommunicator: 5,
-      profileExecutor: 4,
-      profilePlanner: 2,
-      profileCompleted: true,
+  //     profileAnalyst: 3,
+  //     profileCommunicator: 5,
+  //     profileExecutor: 4,
+  //     profilePlanner: 2,
+  //     profileCompleted: true,
 
-      resume: {
-        create: {
-          isGuided: true,
-          isComplete: true,
+  //     resume: {
+  //       create: {
+  //         isGuided: true,
+  //         isComplete: true,
 
-          experiences: {
-            create: [
-              {
-                company: 'Agência Criativa',
-                position: 'Social Media',
-                description: 'Planejamento e gestão de redes sociais.',
-                startDate: new Date('2021-01-01'),
-                current: true,
-              },
-            ],
-          },
+  //         experiences: {
+  //           create: [
+  //             {
+  //               company: 'Agência Criativa',
+  //               position: 'Social Media',
+  //               description: 'Planejamento e gestão de redes sociais.',
+  //               startDate: new Date('2021-01-01'),
+  //               current: true,
+  //             },
+  //           ],
+  //         },
 
-          educations: {
-            create: [
-              {
-                institution: 'Mackenzie',
-                course: 'Marketing',
-                level: 'SUPERIOR',
-                startDate: new Date('2016-01-01'),
-                endDate: new Date('2020-12-01'),
-                current: false,
-              },
-            ],
-          },
+  //         educations: {
+  //           create: [
+  //             {
+  //               institution: 'Mackenzie',
+  //               course: 'Marketing',
+  //               level: 'SUPERIOR',
+  //               startDate: new Date('2016-01-01'),
+  //               endDate: new Date('2020-12-01'),
+  //               current: false,
+  //             },
+  //           ],
+  //         },
 
-          skills: {
-            create: [
-              { name: 'Meta Ads', level: 'AVANCADO' },
-              { name: 'Copywriting', level: 'AVANCADO' },
-            ],
-          },
+  //         skills: {
+  //           create: [
+  //             { name: 'Meta Ads', level: 'AVANCADO' },
+  //             { name: 'Copywriting', level: 'AVANCADO' },
+  //           ],
+  //         },
 
-          languages: {
-            create: [
-              { language: 'Português', level: 'NATIVO' },
-              { language: 'Espanhol', level: 'INTERMEDIARIO' },
-            ],
-          },
-        },
-      },
-    },
-  });
+  //         languages: {
+  //           create: [
+  //             { language: 'Português', level: 'NATIVO' },
+  //             { language: 'Espanhol', level: 'INTERMEDIARIO' },
+  //           ],
+  //         },
+  //       },
+  //     },
+  //   },
+  // });
 
-  await prisma.candidate.create({
-    data: {
-      name: 'Ricardo Alves',
-      email: 'ricardo.alves@email.com',
-      password: hashed44,
-      phone: '(11) 95555-4444',
-      birthDate: new Date('1990-07-28'),
-      cpf: '123.456.789-44',
-      isVerified: true,
+  // await prisma.candidate.create({
+  //   data: {
+  //     name: 'Ricardo Alves',
+  //     email: 'ricardo.alves@email.com',
+  //     password: hashed44,
+  //     phone: '(11) 95555-4444',
+  //     birthDate: new Date('1990-07-28'),
+  //     cpf: '123.456.789-44',
+  //     isVerified: true,
 
-      profileAnalyst: 4,
-      profileCommunicator: 2,
-      profileExecutor: 4,
-      profilePlanner: 5,
-      profileCompleted: true,
+  //     profileAnalyst: 4,
+  //     profileCommunicator: 2,
+  //     profileExecutor: 4,
+  //     profilePlanner: 5,
+  //     profileCompleted: true,
 
-      resume: {
-        create: {
-          isGuided: true,
-          isComplete: true,
+  //     resume: {
+  //       create: {
+  //         isGuided: true,
+  //         isComplete: true,
 
-          experiences: {
-            create: [
-              {
-                company: 'Dev Software House',
-                position: 'Tech Lead',
-                description: 'Arquitetura e liderança técnica.',
-                startDate: new Date('2018-06-01'),
-                current: true,
-              },
-            ],
-          },
+  //         experiences: {
+  //           create: [
+  //             {
+  //               company: 'Dev Software House',
+  //               position: 'Tech Lead',
+  //               description: 'Arquitetura e liderança técnica.',
+  //               startDate: new Date('2018-06-01'),
+  //               current: true,
+  //             },
+  //           ],
+  //         },
 
-          educations: {
-            create: [
-              {
-                institution: 'FIAP',
-                course: 'Engenharia de Software',
-                level: 'SUPERIOR',
-                startDate: new Date('2009-01-01'),
-                endDate: new Date('2013-12-01'),
-                current: false,
-              },
-            ],
-          },
+  //         educations: {
+  //           create: [
+  //             {
+  //               institution: 'FIAP',
+  //               course: 'Engenharia de Software',
+  //               level: 'SUPERIOR',
+  //               startDate: new Date('2009-01-01'),
+  //               endDate: new Date('2013-12-01'),
+  //               current: false,
+  //             },
+  //           ],
+  //         },
 
-          skills: {
-            create: [
-              { name: 'Node.js', level: 'AVANCADO' },
-              { name: 'React', level: 'AVANCADO' },
-              { name: 'AWS', level: 'INTERMEDIARIO' },
-            ],
-          },
+  //         skills: {
+  //           create: [
+  //             { name: 'Node.js', level: 'AVANCADO' },
+  //             { name: 'React', level: 'AVANCADO' },
+  //             { name: 'AWS', level: 'INTERMEDIARIO' },
+  //           ],
+  //         },
 
-          languages: {
-            create: [
-              { language: 'Português', level: 'NATIVO' },
-              { language: 'Inglês', level: 'AVANCADO' },
-            ],
-          },
-        },
-      },
-    },
-  });
+  //         languages: {
+  //           create: [
+  //             { language: 'Português', level: 'NATIVO' },
+  //             { language: 'Inglês', level: 'AVANCADO' },
+  //           ],
+  //         },
+  //       },
+  //     },
+  //   },
+  // });
 
-  console.log('Candidato criado:', candidate.id);
+  // console.log('Candidato criado:', candidate.id);
+
+  const interests = [
+    // Tecnologia
+    { name: 'Desenvolvimento de Software', emoji: '💻', category: 'Tecnologia' },
+    { name: 'Dados & Inteligência Artificial', emoji: '🤖', category: 'Tecnologia' },
+    { name: 'Cibersegurança', emoji: '🔐', category: 'Tecnologia' },
+    { name: 'DevOps & Cloud', emoji: '☁️', category: 'Tecnologia' },
+    { name: 'Design UX/UI', emoji: '🎨', category: 'Tecnologia' },
+    // Negócios
+    { name: 'Marketing Digital', emoji: '📣', category: 'Negócios' },
+    { name: 'Vendas', emoji: '🤝', category: 'Negócios' },
+    { name: 'Finanças & Contabilidade', emoji: '💰', category: 'Negócios' },
+    { name: 'Recursos Humanos', emoji: '👥', category: 'Negócios' },
+    { name: 'Empreendedorismo', emoji: '🚀', category: 'Negócios' },
+    // Saúde
+    { name: 'Enfermagem', emoji: '🩺', category: 'Saúde' },
+    { name: 'Medicina', emoji: '⚕️', category: 'Saúde' },
+    { name: 'Fisioterapia', emoji: '🏃', category: 'Saúde' },
+    { name: 'Saúde Mental', emoji: '🧠', category: 'Saúde' },
+    { name: 'Nutrição', emoji: '🥗', category: 'Saúde' },
+    // Educação
+    { name: 'Docência', emoji: '📚', category: 'Educação' },
+    { name: 'Pedagogia', emoji: '🏫', category: 'Educação' },
+    { name: 'Treinamento Corporativo', emoji: '📋', category: 'Educação' },
+    // Engenharia
+    { name: 'Engenharia Civil', emoji: '🏗️', category: 'Engenharia' },
+    { name: 'Engenharia Elétrica', emoji: '⚡', category: 'Engenharia' },
+    { name: 'Engenharia Mecânica', emoji: '⚙️', category: 'Engenharia' },
+    { name: 'Engenharia de Produção', emoji: '🏭', category: 'Engenharia' },
+    // Criativo
+    { name: 'Design Gráfico', emoji: '✏️', category: 'Criativo' },
+    { name: 'Audiovisual', emoji: '🎬', category: 'Criativo' },
+    { name: 'Arquitetura', emoji: '🏛️', category: 'Criativo' },
+    { name: 'Moda', emoji: '👗', category: 'Criativo' },
+    // Jurídico
+    { name: 'Direito', emoji: '⚖️', category: 'Jurídico' },
+    { name: 'Compliance', emoji: '📜', category: 'Jurídico' },
+    // Logística
+    { name: 'Supply Chain', emoji: '📦', category: 'Logística' },
+    { name: 'Transporte & Mobilidade', emoji: '🚛', category: 'Logística' },
+  ];
+ 
+  for (const interest of interests) {
+    await prisma.interest.upsert({
+      where: { name: interest.name },
+      update: {},
+      create: interest,
+    });
+  }
+ 
+  const priorities = [
+    { name: 'Salário competitivo', icon: '💵' },
+    { name: 'Flexibilidade de horário', icon: '⏰' },
+    { name: 'Trabalho remoto', icon: '🏠' },
+    { name: 'Crescimento de carreira', icon: '📈' },
+    { name: 'Qualidade de vida', icon: '🌿' },
+    { name: 'Cultura da empresa', icon: '🏢' },
+    { name: 'Propósito & Impacto social', icon: '💚' },
+    { name: 'Estabilidade', icon: '🔒' },
+    { name: 'Aprendizado contínuo', icon: '🎓' },
+    { name: 'Benefícios', icon: '🎁' },
+  ];
+ 
+  for (const priority of priorities) {
+    await prisma.professionalPriority.upsert({
+      where: { name: priority.name },
+      update: {},
+      create: priority,
+    });
+  }
+ 
+  console.log('✅ Seed concluído com sucesso');
 
   const sector_0 = await prisma.sector.upsert({
     where: { name: 'Academias' },

@@ -41,28 +41,28 @@ export class CandidateAuthService {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // const hashedPassword = await bcrypt.hash(password, 10);
 
-    const candidate = await this.prisma.candidate.create({
-      data: {
-        cpf: cleanCpf,
-        name: cpfData.name,
-        email: cpfData.email ?? `${cleanCpf}@sem-email.com`,
-        phone: cpfData.phone ?? null,
-        birthDate: cpfData.birthDate ? new Date(cpfData.birthDate) : null,
-        password: hashedPassword,
-        isVerified: true,
-      },
-    });
+    // const candidate = await this.prisma.candidate.create({
+    //   data: {
+    //     cpf: cleanCpf,
+    //     name: cpfData.name,
+    //     email: cpfData.email ?? `${cleanCpf}@sem-email.com`,
+    //     phone: cpfData.phone ?? null,
+    //     birthDate: cpfData.birthDate ? new Date(cpfData.birthDate) : null,
+    //     password: hashedPassword,
+    //     isVerified: true,
+    //   },
+    // });
 
-    return {
-      message: 'Cadastro realizado com sucesso.',
-      candidate: {
-        id: candidate.id,
-        name: candidate.name,
-        cpf: cleanCpf,
-      },
-    };
+    // return {
+    //   message: 'Cadastro realizado com sucesso.',
+    //   candidate: {
+    //     id: candidate.id,
+    //     name: candidate.name,
+    //     cpf: cleanCpf,
+    //   },
+    // };
   }
 
   async login(data: { cpf: string; password: string }) {
@@ -73,7 +73,7 @@ export class CandidateAuthService {
     const candidate = await this.prisma.candidate.findUnique({
       where: { cpf: cleanCpf },
     });
-    if (!candidate) throw new UnauthorizedException('CPF ou senha inválidos.');
+    if (!candidate) throw new UnauthorizedException('CPF não encontrado! Crie uma conta');
 
     const passwordMatch = await bcrypt.compare(password, candidate.password);
     if (!passwordMatch) throw new UnauthorizedException('CPF ou senha inválidos.');

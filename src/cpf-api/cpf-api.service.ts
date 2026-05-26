@@ -12,10 +12,11 @@ export class CpfApiService {
     phone?: string;
     birthDate?: string;
   }> {
-    const response = await axios.get(`${this.baseUrl}/${cpf}`, {
-      headers: { Authorization: `Bearer ${this.apiKey}` },
+    const response = await axios.get(`${this.baseUrl}/${this.apiKey}/26/${cpf}`, {
       timeout: 8000,
     });
+
+    console.log(response.data);
 
     const data = response.data;
 

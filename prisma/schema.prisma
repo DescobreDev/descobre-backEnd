@@ -275,8 +275,6 @@ model UsageRecord {
   @@unique([companyId, year, month])
 }
 
-// ─── CANDIDATO ────────────────────────────────────────────
-
 model Candidate {
   id        Int       @id @default(autoincrement())
   name      String
@@ -301,6 +299,12 @@ model Candidate {
   profileExecutor   Int @default(0)
   profilePlanner    Int @default(0)
   profileCompleted  Boolean @default(false)
+
+  avatarUrl   String? // URL quando tiver storage
+  avatarIndex Int?    // índice do avatar pré-definido (0-11)
+
+  interests   CandidateInterest[]
+  priorities  CandidatePriority[]
 
   resume       CandidateResume?
   applications Application[]
@@ -473,4 +477,43 @@ enum ExtraType {
   PREMIO
   PUBLICACAO
   OUTRO
+}
+
+model Interest {
+  id       Int    @id @default(autoincrement())
+  name     String @unique
+  emoji    String
+  category String
+
+  candidates CandidateInterest[]
+}
+
+model CandidateInterest {
+  candidateId Int
+  interestId  Int
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+  interest  Interest  @relation(fields: [interestId], references: [id])
+
+  @@id([candidateId, interestId])
+}
+
+
+model ProfessionalPriority {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  icon String
+
+  candidates CandidatePriority[]
+}
+
+model CandidatePriority {
+  candidateId  Int
+  priorityId   Int
+  order        Int
+
+  candidate Candidate            @relation(fields: [candidateId], references: [id])
+  priority  ProfessionalPriority @relation(fields: [priorityId], references: [id])
+
+  @@id([candidateId, priorityId])
 }
