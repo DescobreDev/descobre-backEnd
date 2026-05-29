@@ -1,4 +1,3 @@
-// src/auth/auth.dto.ts
 import { IsEmail, IsString, MinLength, Length, IsBoolean, IsOptional } from 'class-validator';
 import { Transform } from 'class-transformer';
 

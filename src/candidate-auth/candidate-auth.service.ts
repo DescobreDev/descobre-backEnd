@@ -33,6 +33,7 @@ export class CandidateAuthService {
     if (existing) throw new ConflictException('CPF já cadastrado.');
 
     let cpfData: { name: string; email?: string; phone?: string; birthDate?: string };
+    
     try {
       cpfData = await this.cpfApiService.lookup(cleanCpf);
     } catch {
@@ -41,28 +42,28 @@ export class CandidateAuthService {
       );
     }
 
-    // const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // const candidate = await this.prisma.candidate.create({
-    //   data: {
-    //     cpf: cleanCpf,
-    //     name: cpfData.name,
-    //     email: cpfData.email ?? `${cleanCpf}@sem-email.com`,
-    //     phone: cpfData.phone ?? null,
-    //     birthDate: cpfData.birthDate ? new Date(cpfData.birthDate) : null,
-    //     password: hashedPassword,
-    //     isVerified: true,
-    //   },
-    // });
+    const candidate = await this.prisma.candidate.create({
+      data: {
+        cpf: cleanCpf,
+        name: cpfData.name,
+        email: cpfData.email ?? `${cleanCpf}@sem-email.com`,
+        phone: cpfData.phone ?? null,
+        birthDate: cpfData.birthDate ? new Date(cpfData.birthDate) : null,
+        password: hashedPassword,
+        isVerified: true,
+      },
+    });
 
-    // return {
-    //   message: 'Cadastro realizado com sucesso.',
-    //   candidate: {
-    //     id: candidate.id,
-    //     name: candidate.name,
-    //     cpf: cleanCpf,
-    //   },
-    // };
+    return {
+      message: 'Cadastro realizado com sucesso.',
+      candidate: {
+        id: candidate.id,
+        name: candidate.name,
+        cpf: cleanCpf,
+      },
+    };
   }
 
   async login(data: { cpf: string; password: string }) {
