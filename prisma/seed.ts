@@ -86,12 +86,6 @@ async function main() {
       cpf: '123.456.789-35',
       isVerified: true,
 
-      profileAnalyst: 3,
-      profileCommunicator: 4,
-      profileExecutor: 2,
-      profilePlanner: 5,
-      profileCompleted: true,
-
       resume: {
         create: {
           isGuided: true,
@@ -168,12 +162,6 @@ async function main() {
       cpf: '123.456.789-11',
       isVerified: true,
 
-      profileAnalyst: 5,
-      profileCommunicator: 3,
-      profileExecutor: 2,
-      profilePlanner: 4,
-      profileCompleted: true,
-
       resume: {
         create: {
           isGuided: true,
@@ -233,12 +221,6 @@ async function main() {
       cpf: '123.456.789-22',
       isVerified: true,
 
-      profileAnalyst: 2,
-      profileCommunicator: 2,
-      profileExecutor: 5,
-      profilePlanner: 3,
-      profileCompleted: true,
-
       resume: {
         create: {
           isGuided: true,
@@ -295,12 +277,6 @@ async function main() {
       birthDate: new Date('1997-11-05'),
       cpf: '123.456.789-33',
       isVerified: true,
-
-      profileAnalyst: 3,
-      profileCommunicator: 5,
-      profileExecutor: 4,
-      profilePlanner: 2,
-      profileCompleted: true,
 
       resume: {
         create: {
@@ -360,12 +336,6 @@ async function main() {
       cpf: '123.456.789-44',
       isVerified: true,
 
-      profileAnalyst: 4,
-      profileCommunicator: 2,
-      profileExecutor: 4,
-      profilePlanner: 5,
-      profileCompleted: true,
-
       resume: {
         create: {
           isGuided: true,
@@ -415,10 +385,24 @@ async function main() {
     },
   });
 
+  
+  const senhaDeividy = await bcrypt.hash('Deividy33734742!', 10);
+
+  await prisma.candidate.create({
+    data: {
+      name: 'Deividy',
+      email: 'deividygustavo2016@gmail.com',
+      password: senhaDeividy,
+      phone: '(11) 99999-9999',
+      birthDate: new Date('1995-06-15'),
+      cpf: '49557091843',
+      isVerified: true,
+    },
+  });
+
   console.log('Candidato criado:', candidate.id);
 
   const interests = [
-    // Tecnologia
     { name: 'Desenvolvimento de Software', emoji: '💻', category: 'Tecnologia' },
     { name: 'Dados & Inteligência Artificial', emoji: '🤖', category: 'Tecnologia' },
     { name: 'Cibersegurança', emoji: '🔐', category: 'Tecnologia' },

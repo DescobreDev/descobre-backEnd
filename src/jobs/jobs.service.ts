@@ -58,15 +58,15 @@ export class JobsService {
         },
         customBenefits,
         ...(profile && {
-          profile: {
-            create: {
-              analyst: profile.analyst,
-              communicator: profile.communicator,
-              executor: profile.executor,
-              planner: profile.planner,
-              priority: profile.priority,
-            },
-          },
+          // profile: {
+          //   create: {
+          //     analyst: profile.analyst,
+          //     communicator: profile.communicator,
+          //     executor: profile.executor,
+          //     planner: profile.planner,
+          //     priority: profile.priority,
+          //   },
+          // },
         }),
       },
       include: {
@@ -135,9 +135,12 @@ export class JobsService {
         include: {
           candidate: {
             select: {
-              id: true, name: true, email: true, phone: true,
-              profileAnalyst: true, profileCommunicator: true,
-              profileExecutor: true, profilePlanner: true,
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              profileType: true,
+              profileTypeSecondary: true,
             },
           },
         },
@@ -212,9 +215,9 @@ export class JobsService {
 
     if (!application) throw new NotFoundException('Candidatura não encontrada');
 
-    const compatibility = this.calculateCompatibility(job.profile, application.candidate);
+    // const compatibility = this.calculateCompatibility(job.profile, application.candidate);
 
-    return { ...application, compatibility, jobProfile: job.profile, jobStatus: job.status };
+    return { ...application, compatibility: null, jobProfile: job.profile, jobStatus: job.status };
   }
 
   private calculateCompatibility(jobProfile, candidate) {

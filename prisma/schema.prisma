@@ -104,13 +104,13 @@ model Job {
   affirmative AffirmativeType @default(NOT_INFORMED)
   deadline    DateTime?
 
-  cep          String?
-  state        String?
-  city         String?
-  district     String?
-  address      String?
-  number       String?
-  complement   String?
+  cep        String?
+  state      String?
+  city       String?
+  district   String?
+  address    String?
+  number     String?
+  complement String?
 
   companyId Int
   active    Boolean  @default(true)
@@ -123,18 +123,18 @@ model Job {
   customBenefits String[]
 
   applications Application[]
-  profile JobProfile?
+  profile      JobProfile?
 }
 
 model JobProfile {
-  id          Int         @id @default(autoincrement())
-  jobId       Int         @unique
-  priority    ProfileType
+  id       Int         @id @default(autoincrement())
+  jobId    Int         @unique
+  priority ProfileType
 
-  analyst     Int @default(0)
+  analyst      Int @default(0)
   communicator Int @default(0)
-  executor    Int @default(0)
-  planner     Int @default(0)
+  executor     Int @default(0)
+  planner      Int @default(0)
 
   job Job @relation(fields: [jobId], references: [id])
 }
@@ -263,8 +263,8 @@ model Payment {
 model UsageRecord {
   id             Int @id @default(autoincrement())
   companyId      Int
-  year           Int // ano de referência
-  month          Int // mês de referência
+  year           Int
+  month          Int
   jobsUsed       Int @default(0)
   aiResumeUsed   Int @default(0)
   aiSalaryUsed   Int @default(0)
@@ -276,14 +276,14 @@ model UsageRecord {
 }
 
 model Candidate {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  phone     String?
-  birthDate DateTime?
-  cpf       String?   @unique
-  profile   String?
+  id                   Int       @id @default(autoincrement())
+  name                 String
+  email                String    @unique
+  password             String
+  phone                String?
+  birthDate            DateTime?
+  cpf                  String?   @unique
+  profileTypeSecondary String?
 
   isVerified              Boolean   @default(false)
   verificationCode        String?
@@ -294,17 +294,14 @@ model Candidate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  profileAnalyst    Int @default(0)
-  profileCommunicator Int @default(0)
-  profileExecutor   Int @default(0)
-  profilePlanner    Int @default(0)
-  profileCompleted  Boolean @default(false)
+  profileType      String?
+  profileCompleted Boolean @default(false)
 
-  avatarUrl   String? // URL quando tiver storage
-  avatarIndex Int?    // índice do avatar pré-definido (0-11)
+  avatarUrl   String?
+  avatarIndex Int?
 
-  interests   CandidateInterest[]
-  priorities  CandidatePriority[]
+  interests  CandidateInterest[]
+  priorities CandidatePriority[]
 
   resume       CandidateResume?
   applications Application[]
@@ -333,6 +330,7 @@ model ResumeExperience {
   resumeId    Int
   company     String
   position    String
+  salary      String?
   description String?   @db.Text
   startDate   DateTime
   endDate     DateTime?
@@ -395,9 +393,9 @@ model Application {
   appliedAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  candidate Candidate            @relation(fields: [candidateId], references: [id])
-  job       Job                  @relation(fields: [jobId], references: [id])
-  history   ApplicationHistory[]
+  candidate       Candidate            @relation(fields: [candidateId], references: [id])
+  job             Job                  @relation(fields: [jobId], references: [id])
+  history         ApplicationHistory[]
   interviewEvents InterviewEvent[]
 
   @@unique([candidateId, jobId])
@@ -498,7 +496,6 @@ model CandidateInterest {
   @@id([candidateId, interestId])
 }
 
-
 model ProfessionalPriority {
   id   Int    @id @default(autoincrement())
   name String @unique
@@ -508,9 +505,9 @@ model ProfessionalPriority {
 }
 
 model CandidatePriority {
-  candidateId  Int
-  priorityId   Int
-  order        Int
+  candidateId Int
+  priorityId  Int
+  order       Int
 
   candidate Candidate            @relation(fields: [candidateId], references: [id])
   priority  ProfessionalPriority @relation(fields: [priorityId], references: [id])

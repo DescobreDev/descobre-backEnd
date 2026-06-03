@@ -91,7 +91,7 @@ export class OnboardingService {
         await tx.resumeEducation.create({
           data: {
             resumeId,
-            level: dto.education.level as any,
+            level: dto.education.level as any ?? '',
             institution: dto.education.institution ?? '',
             course: '',
             startDate: new Date('2000-01-01'),

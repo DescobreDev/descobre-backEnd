@@ -15,6 +15,8 @@ import {
 } from 'class-validator';
 
 export enum EducationLevel {
+  NAO_ALFABETIZADO = 'NAO_ALFABETIZADO',
+  NAO_ESCOLARIZADO = 'NAO_ESCOLARIZADO',
   FUNDAMENTAL = 'FUNDAMENTAL',
   MEDIO = 'MEDIO',
   TECNICO = 'TECNICO',
@@ -63,17 +65,22 @@ export class ExperienceDto {
   @IsNotEmpty()
   company: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  position: string;
+  position?: string;
 
+  @IsOptional()
+  @IsString()
+  salary?: string;
+
+  @IsOptional()
   @IsString()
   @Matches(/^\d{4}-(0[1-9]|1[0-2])$/, {
     message: 'startDate deve estar no formato YYYY-MM',
   })
-  startDate: string;
+  startDate?: string;
 
-  @ValidateIf((o) => !o.current)
+  @ValidateIf((o) => !o.current && o.endDate)
   @IsString()
   @Matches(/^\d{4}-(0[1-9]|1[0-2])$/, {
     message: 'endDate deve estar no formato YYYY-MM',

@@ -9,14 +9,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { OnboardingService } from './onboarding.service';
-
-interface AuthenticatedRequest extends Request {
-  candidate: { id: number; email: string };
-}
+import { CandidateAuthGuard } from 'src/candidate-auth/guards/candidate-auth.guard';
+import { CompleteOnboardingDto } from './dto/complete-onboarding';
 
 @Controller('onboarding')
+@UseGuards(CandidateAuthGuard)
 export class OnboardingController {
-  constructor(private readonly onboardingService: OnboardingService) {}
+  constructor(private readonly onboardingService: OnboardingService) { }
 
   @Get('interests')
   getInterests() {
@@ -28,11 +27,15 @@ export class OnboardingController {
     return this.onboardingService.getPriorities();
   }
 
-//   @Post('complete')
-//   @HttpCode(HttpStatus.OK)
-//   complete(
-//     @Request() req: AuthenticatedRequest,
-//   ) {
-//     return this.onboardingService.complete(req.candidate.id);
-//   }
+  @Post('complete')
+  @HttpCode(HttpStatus.OK)
+  complete(
+    @Request() req: any,
+    @Body() dto: CompleteOnboardingDto,
+  ) {
+    return this.onboardingService.complete(
+      req.user.id,
+      dto,
+    );
+  }
 }

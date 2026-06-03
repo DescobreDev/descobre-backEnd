@@ -13,9 +13,10 @@ import { GeminiModule } from './gemini/gemini.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { CandidateAuthModule } from './candidate-auth/candidate-auth.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { DiscModule } from './disc/disc.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, UsageModule, JobsModule, PaymentsModule, GeminiModule, DashboardModule, CandidateAuthModule, OnboardingModule],
+  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, UsageModule, JobsModule, PaymentsModule, GeminiModule, DashboardModule, CandidateAuthModule, OnboardingModule, DiscModule],
   controllers: [AppController],
   providers: [AppService],
 })
