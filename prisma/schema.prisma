@@ -328,11 +328,11 @@ model CandidateResume {
 model ResumeExperience {
   id          Int       @id @default(autoincrement())
   resumeId    Int
-  company     String
-  position    String
+  company     String?
+  position    String?
   salary      String?
   description String?   @db.Text
-  startDate   DateTime
+  startDate   DateTime?
   endDate     DateTime?
   current     Boolean   @default(false)
 
@@ -444,6 +444,8 @@ enum ApplicationStatus {
 }
 
 enum EducationLevel {
+  NAO_ALFABETIZADO
+  NAO_ESCOLARIZADO
   FUNDAMENTAL
   MEDIO
   TECNICO

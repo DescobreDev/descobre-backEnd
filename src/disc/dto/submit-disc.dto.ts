@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsPositive } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsPositive } from 'class-validator';
 
 const PROFILES = ['EXECUTOR', 'COMMUNICATOR', 'ANALYST', 'PLANNER'] as const;
 
@@ -16,8 +16,13 @@ export class SubmitDiscDto {
 
   @IsIn(PROFILES)
   answer2: string;
+
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
   question3Id?: number;
 
-  @IsIn([...PROFILES, null, undefined])
+  @IsOptional()
+  @IsIn(PROFILES)
   answer3?: string;
 }

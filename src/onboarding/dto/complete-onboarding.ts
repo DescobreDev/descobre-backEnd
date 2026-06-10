@@ -75,9 +75,6 @@ export class ExperienceDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^\d{4}-(0[1-9]|1[0-2])$/, {
-    message: 'startDate deve estar no formato YYYY-MM',
-  })
   startDate?: string;
 
   @ValidateIf((o) => !o.current && o.endDate)

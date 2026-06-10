@@ -1,8 +1,18 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
-import { ApplicationStatus } from '@prisma/client';
+import { ApplicationStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsageService } from '../usage/usage.service';
 import { GeminiService } from '../gemini/gemini.service';
+
+export interface FindJobsForCandidateParams {
+  page: number;
+  limit: number;
+  search?: string;
+  workFormat?: 'REMOTE' | 'HYBRID' | 'ONSITE';
+  contractType?: 'CLT' | 'PJ' | 'FREELANCER';
+  sectorId?: number;
+  candidateId?: number;
+}
 
 @Injectable()
 export class JobsService {
@@ -543,5 +553,197 @@ export class JobsService {
       },
       include: { candidate: true },
     });
+  }
+
+  async findForCandidates(params: FindJobsForCandidateParams) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      workFormat,
+      contractType,
+      sectorId,
+      candidateId,
+    } = params;
+ 
+    const skip = (page - 1) * limit;
+ 
+    const where: Prisma.JobWhereInput = {
+      active: true,
+      status: 'ACTIVE',
+      visible: true,
+      ...(search && {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { company: { name: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
+      ...(workFormat && { workFormat }),
+      ...(contractType && { contractType }),
+      ...(sectorId && { sectorId }),
+    };
+ 
+    const [jobs, total] = await Promise.all([
+      this.prisma.job.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          salary: true,
+          workFormat: true,
+          contractType: true,
+          jobType: true,
+          city: true,
+          state: true,
+          deadline: true,
+          createdAt: true,
+          company: {
+            select: {
+              id: true,
+              name: true,
+              city: true,
+              state: true,
+            },
+          },
+          benefits: {
+            select: { benefit: { select: { name: true } } },
+          },
+          sectorId: true,
+        },
+      }),
+      this.prisma.job.count({ where }),
+    ]);
+ 
+    let appliedJobIds = new Set<number>();
+    if (candidateId) {
+      const applications = await this.prisma.application.findMany({
+        where: {
+          candidateId,
+          jobId: { in: jobs.map((j) => j.id) },
+        },
+        select: { jobId: true },
+      });
+      appliedJobIds = new Set(applications.map((a) => a.jobId));
+    }
+ 
+    const formatted = jobs.map((job) => ({
+      ...job,
+      salary: job.salary ? Number(job.salary) : null,
+      benefits: job.benefits.map((b) => b.benefit.name),
+      alreadyApplied: appliedJobIds.has(job.id),
+    }));
+ 
+    return {
+      jobs: formatted,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async findOneForCandidate(jobId: number, candidateId?: number) {
+    const job = await this.prisma.job.findFirst({
+      where: {
+        id: jobId,
+        active: true,
+        status: 'ACTIVE',
+        visible: true,
+      },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            city: true,
+            state: true,
+            about: true,
+            employees: true,
+            site: true,
+          },
+        },
+        benefits: {
+          include: { benefit: true },
+        },
+      },
+    });
+ 
+    if (!job) throw new NotFoundException('Vaga não encontrada ou indisponível.');
+ 
+    let alreadyApplied = false;
+    let applicationStatus: string | null = null;
+ 
+    if (candidateId) {
+      const application = await this.prisma.application.findUnique({
+        where: { candidateId_jobId: { candidateId, jobId } },
+        select: { status: true },
+      });
+      alreadyApplied = !!application;
+      applicationStatus = application?.status ?? null;
+    }
+ 
+    return {
+      ...job,
+      salary: job.salary ? Number(job.salary) : null,
+      benefits: job.benefits.map((b) => b.benefit.name),
+      customBenefits: job.customBenefits,
+      alreadyApplied,
+      applicationStatus,
+    };
+  }
+
+  
+  async applyToJob(jobId: number, candidateId: number) {
+    const job = await this.prisma.job.findFirst({
+      where: { id: jobId, active: true, status: 'ACTIVE', visible: true },
+      select: { id: true, title: true, deadline: true },
+    });
+ 
+    if (!job) throw new NotFoundException('Vaga não encontrada ou indisponível.');
+ 
+    if (job.deadline && new Date(job.deadline) < new Date()) {
+      throw new BadRequestException('O prazo para candidatura desta vaga encerrou.');
+    }
+ 
+    const existing = await this.prisma.application.findUnique({
+      where: { candidateId_jobId: { candidateId, jobId } },
+    });
+ 
+    if (existing) throw new ConflictException('Você já se candidatou a esta vaga.');
+ 
+    const application = await this.prisma.application.create({
+      data: {
+        candidateId,
+        jobId,
+        status: 'RECEBIDA',
+        history: {
+          create: {
+            status: 'RECEBIDA',
+            note: 'Candidatura realizada pelo app',
+          },
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        appliedAt: true,
+        job: {
+          select: {
+            id: true,
+            title: true,
+            company: { select: { name: true } },
+          },
+        },
+      },
+    });
+ 
+    return {
+      message: 'Candidatura realizada com sucesso!',
+      application,
+    };
   }
 }
