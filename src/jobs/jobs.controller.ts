@@ -107,7 +107,6 @@ export class JobsController {
   respondToInterview(@Param('applicationId') applicationId: string, @Body() body) {
     return this.jobsService.respondToInterview(+applicationId, body.status, body.note, body.proposedAt);
   }
-
   @Post(':id/candidates')
   attachCandidate(
     @Param('id') jobId: string,
