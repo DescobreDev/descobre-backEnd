@@ -565,9 +565,9 @@ export class JobsService {
       sectorId,
       candidateId,
     } = params;
- 
+
     const skip = (page - 1) * limit;
- 
+
     const where: Prisma.JobWhereInput = {
       active: true,
       status: 'ACTIVE',
@@ -583,7 +583,7 @@ export class JobsService {
       ...(contractType && { contractType }),
       ...(sectorId && { sectorId }),
     };
- 
+
     const [jobs, total] = await Promise.all([
       this.prisma.job.findMany({
         where,
@@ -618,7 +618,7 @@ export class JobsService {
       }),
       this.prisma.job.count({ where }),
     ]);
- 
+
     let appliedJobIds = new Set<number>();
     if (candidateId) {
       const applications = await this.prisma.application.findMany({
@@ -630,14 +630,14 @@ export class JobsService {
       });
       appliedJobIds = new Set(applications.map((a) => a.jobId));
     }
- 
+
     const formatted = jobs.map((job) => ({
       ...job,
       salary: job.salary ? Number(job.salary) : null,
       benefits: job.benefits.map((b) => b.benefit.name),
       alreadyApplied: appliedJobIds.has(job.id),
     }));
- 
+
     return {
       jobs: formatted,
       total,
@@ -671,12 +671,12 @@ export class JobsService {
         },
       },
     });
- 
+
     if (!job) throw new NotFoundException('Vaga não encontrada ou indisponível.');
- 
+
     let alreadyApplied = false;
     let applicationStatus: string | null = null;
- 
+
     if (candidateId) {
       const application = await this.prisma.application.findUnique({
         where: { candidateId_jobId: { candidateId, jobId } },
@@ -685,7 +685,7 @@ export class JobsService {
       alreadyApplied = !!application;
       applicationStatus = application?.status ?? null;
     }
- 
+
     return {
       ...job,
       salary: job.salary ? Number(job.salary) : null,
@@ -696,25 +696,69 @@ export class JobsService {
     };
   }
 
-  
+  async findApplicationsForCandidate(
+  candidateId: number,
+  { page = 1, limit = 10, status }: { page?: number; limit?: number; status?: ApplicationStatus },
+) {
+  const where: Prisma.ApplicationWhereInput = {
+    candidateId,
+    ...(status ? { status } : {}),
+  };
+
+  const [applications, total] = await Promise.all([
+    this.prisma.application.findMany({
+      where,
+      include: {
+        job: {
+          select: {
+            id: true,
+            title: true,
+            company: {
+              select: { id: true, name: true, city: true, state: true },
+            },
+          },
+        },
+      },
+      orderBy: { appliedAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    this.prisma.application.count({ where }),
+  ]);
+
+  return {
+    data: applications.map((a) => ({
+      id: a.id,
+      jobId: a.job.id,
+      jobTitle: a.job.title,
+      companyName: a.job.company.name,
+      city: a.job.company.city,
+      state: a.job.company.state,
+      appliedAt: a.appliedAt,
+      status: a.status,
+    })),
+    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+  };
+}
+
   async applyToJob(jobId: number, candidateId: number) {
     const job = await this.prisma.job.findFirst({
       where: { id: jobId, active: true, status: 'ACTIVE', visible: true },
       select: { id: true, title: true, deadline: true },
     });
- 
+
     if (!job) throw new NotFoundException('Vaga não encontrada ou indisponível.');
- 
+
     if (job.deadline && new Date(job.deadline) < new Date()) {
       throw new BadRequestException('O prazo para candidatura desta vaga encerrou.');
     }
- 
+
     const existing = await this.prisma.application.findUnique({
       where: { candidateId_jobId: { candidateId, jobId } },
     });
- 
+
     if (existing) throw new ConflictException('Você já se candidatou a esta vaga.');
- 
+
     const application = await this.prisma.application.create({
       data: {
         candidateId,
@@ -740,7 +784,7 @@ export class JobsService {
         },
       },
     });
- 
+
     return {
       message: 'Candidatura realizada com sucesso!',
       application,

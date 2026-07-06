@@ -73,7 +73,7 @@ export class OnboardingService {
       });
 
       if (!resume) {
-        resume = await tx.candidateResume.create({
+        resume = await tx.candidateResume.create({  
           data: { candidateId, isGuided: true },
         });
       } else {
