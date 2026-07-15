@@ -4,7 +4,9 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -25,6 +27,19 @@ export class OnboardingController {
   @Get('priorities')
   getPriorities() {
     return this.onboardingService.getPriorities();
+  }
+
+  @Get('sectors')
+  getSectors(@Query('search') search?: string) {
+    return this.onboardingService.getSectors(search);
+  }
+
+  @Get('positions')
+  getPositions(
+    @Query('sectorId', ParseIntPipe) sectorId: number,
+    @Query('search') search?: string,
+  ) {
+    return this.onboardingService.getPositions(sectorId, search);
   }
 
   @Post('complete')

@@ -41,6 +41,21 @@ export enum LanguageLevel {
   NATIVO = 'NATIVO',
 }
 
+// NOVO: espelham os enums globais do schema (ContractType / ExperienceLevel)
+export enum ContractType {
+  CLT = 'CLT',
+  PJ = 'PJ',
+  FREELANCER = 'FREELANCER',
+}
+
+export enum ExperienceLevel {
+  ESTAGIO = 'ESTAGIO',
+  JUNIOR = 'JUNIOR',
+  PLENO = 'PLENO',
+  SENIOR = 'SENIOR',
+  ESPECIALISTA = 'ESPECIALISTA',
+}
+
 export class PriorityOrderDto {
   @IsInt()
   @Min(1)
@@ -155,4 +170,46 @@ export class CompleteOnboardingDto {
   @IsOptional()
   @IsString()
   avatarUrl?: string | null;
+
+  // --- NOVO: preferências de vaga ---
+  @IsInt()
+  @Min(1)
+  desiredSectorId: number;
+
+  @IsInt()
+  @Min(1)
+  desiredPositionId: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  salaryMin?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  salaryMax?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  salaryNegotiable?: boolean;
+
+  @IsArray()
+  @IsEnum(ContractType, { each: true })
+  contractTypes: ContractType[];
+
+  @IsEnum(ExperienceLevel)
+  experienceLevel: ExperienceLevel;
+
+  @IsBoolean()
+  acceptsTravel: boolean;
+
+  // --- NOVO: localização ---
+  @IsString()
+  @IsNotEmpty()
+  city: string;
+
+  @IsString()
+  @Matches(/^[A-Z]{2}$/, { message: 'state deve ser a sigla da UF (ex: SP)' })
+  state: string;
 }

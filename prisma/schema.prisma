@@ -122,19 +122,21 @@ model Job {
   benefits       JobBenefit[]
   customBenefits String[]
 
+  matches Match[]
+
   applications Application[]
   profile      JobProfile?
 }
 
 model JobProfile {
-  id       Int         @id @default(autoincrement())
-  jobId    Int         @unique
-  priority ProfileType
+  id Int @id @default(autoincrement())
 
-  analyst      Int @default(0)
-  communicator Int @default(0)
-  executor     Int @default(0)
-  planner      Int @default(0)
+  jobId Int @unique
+
+  primaryProfile   ProfileType
+  secondaryProfile ProfileType?
+
+  experienceLevel ExperienceLevel
 
   job Job @relation(fields: [jobId], references: [id])
 }
@@ -275,15 +277,37 @@ model UsageRecord {
   @@unique([companyId, year, month])
 }
 
+enum ExperienceLevel {
+  ESTAGIO
+  JUNIOR
+  PLENO
+  SENIOR
+  ESPECIALISTA
+}
+
 model Candidate {
-  id                   Int       @id @default(autoincrement())
-  name                 String
-  email                String    @unique
-  password             String
-  phone                String?
-  birthDate            DateTime?
-  cpf                  String?   @unique
-  profileTypeSecondary String?
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  phone     String?
+  birthDate DateTime?
+  cpf       String?   @unique
+
+  profileType          ProfileType?
+  profileTypeSecondary ProfileType?
+
+  desiredSectorId   Int?
+  desiredPositionId Int?
+  desiredSalaryMin Decimal? @db.Decimal(10, 2)
+  desiredSalaryMax Decimal? @db.Decimal(10, 2)
+  salaryNegotiable Boolean @default(false)
+
+  contractTypes   ContractType[]
+  experienceLevel ExperienceLevel?
+  acceptsTravel   Boolean?
+  city            String?
+  state           String?
 
   isVerified              Boolean   @default(false)
   verificationCode        String?
@@ -294,7 +318,6 @@ model Candidate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  profileType      String?
   profileCompleted Boolean @default(false)
 
   avatarUrl   String?
@@ -305,6 +328,8 @@ model Candidate {
 
   resume       CandidateResume?
   applications Application[]
+
+  matches Match[]
 }
 
 model CandidateResume {
@@ -401,14 +426,44 @@ model Application {
   @@unique([candidateId, jobId])
 }
 
+enum HistoryActor {
+  COMPANY
+  CANDIDATE
+  SYSTEM
+}
+
 model ApplicationHistory {
-  id            Int               @id @default(autoincrement())
+  id            Int @id @default(autoincrement())
   applicationId Int
-  status        ApplicationStatus
-  note          String?
-  changedAt     DateTime          @default(now())
+
+  status ApplicationStatus
+  actor  HistoryActor
+
+  note      String?
+  changedAt DateTime @default(now())
 
   application Application @relation(fields: [applicationId], references: [id])
+}
+
+model Match {
+  id Int @id @default(autoincrement())
+
+  candidateId Int
+  jobId Int
+
+  score Float
+
+  criteria Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+  job Job @relation(fields: [jobId], references: [id])
+
+  @@unique([candidateId, jobId])
+  @@index([candidateId])
+  @@index([jobId])
 }
 
 enum InterviewEventType {
@@ -416,6 +471,11 @@ enum InterviewEventType {
   CONFIRMED
   DECLINED
   RESCHEDULED
+}
+
+enum InterviewType {
+  ONLINE
+  PRESENCIAL
 }
 
 model InterviewEvent {
@@ -427,7 +487,7 @@ model InterviewEvent {
   meetingLink   String?
   address       String?
   scheduledAt   DateTime?
-  interviewType String?
+  interviewType InterviewType?
   proposedAt    DateTime?
   createdAt     DateTime           @default(now())
 

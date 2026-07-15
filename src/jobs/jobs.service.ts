@@ -287,8 +287,13 @@ export class JobsService {
 
       await tx.applicationHistory.create({
         data: {
-          applicationId,
+          application: {
+            connect: {
+              id: applicationId,
+            },
+          },
           status,
+          actor: 'COMPANY',
           note: status !== 'ENTREVISTA' ? note : undefined,
         },
       });
@@ -301,7 +306,10 @@ export class JobsService {
             scheduledAt: new Date(interviewData.scheduledAt),
             meetingLink: interviewData.meetingLink ?? null,
             address: interviewData.address ?? null,
-            interviewType: interviewData.type,
+            interviewType:
+              interviewData.type === 'online'
+                ? 'ONLINE'
+                : 'PRESENCIAL',
             message: note ?? null,
           },
         });
@@ -331,7 +339,8 @@ export class JobsService {
           await tx.applicationHistory.createMany({
             data: pending.map(a => ({
               applicationId: a.id,
-              status: 'RECEBIDA' as ApplicationStatus,
+              status: 'RECEBIDA',
+              actor: 'SYSTEM',
               note: 'Vaga encerrada por contratação',
             })),
           });
@@ -455,10 +464,12 @@ export class JobsService {
           await tx.applicationHistory.createMany({
             data: toReset.map(a => ({
               applicationId: a.id,
-              status: 'RECEBIDA' as ApplicationStatus,
-              note: wasHired
-                ? `Vaga reaberta após contratação — processo reiniciado (status anterior: ${a.status})`
-                : `Vaga reaberta — processo reiniciado (status anterior: ${a.status})`,
+              status: 'RECEBIDA',
+              actor: 'SYSTEM',
+              note:
+                wasHired
+                  ? `Vaga reaberta após contratação — processo reiniciado (status anterior: ${a.status})`
+                  : `Vaga reaberta — processo reiniciado (status anterior: ${a.status})`,
             })),
           });
         }
@@ -522,7 +533,6 @@ export class JobsService {
       where: {
         id: jobId,
         companyId,
-        // removido active: true para ambiente de teste
       },
     });
 
@@ -547,6 +557,7 @@ export class JobsService {
         history: {
           create: {
             status: 'RECEBIDA',
+            actor: 'COMPANY',
             note: 'Candidato adicionado manualmente',
           },
         },
@@ -697,49 +708,49 @@ export class JobsService {
   }
 
   async findApplicationsForCandidate(
-  candidateId: number,
-  { page = 1, limit = 10, status }: { page?: number; limit?: number; status?: ApplicationStatus },
-) {
-  const where: Prisma.ApplicationWhereInput = {
-    candidateId,
-    ...(status ? { status } : {}),
-  };
+    candidateId: number,
+    { page = 1, limit = 10, status }: { page?: number; limit?: number; status?: ApplicationStatus },
+  ) {
+    const where: Prisma.ApplicationWhereInput = {
+      candidateId,
+      ...(status ? { status } : {}),
+    };
 
-  const [applications, total] = await Promise.all([
-    this.prisma.application.findMany({
-      where,
-      include: {
-        job: {
-          select: {
-            id: true,
-            title: true,
-            company: {
-              select: { id: true, name: true, city: true, state: true },
+    const [applications, total] = await Promise.all([
+      this.prisma.application.findMany({
+        where,
+        include: {
+          job: {
+            select: {
+              id: true,
+              title: true,
+              company: {
+                select: { id: true, name: true, city: true, state: true },
+              },
             },
           },
         },
-      },
-      orderBy: { appliedAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    this.prisma.application.count({ where }),
-  ]);
+        orderBy: { appliedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.application.count({ where }),
+    ]);
 
-  return {
-    data: applications.map((a) => ({
-      id: a.id,
-      jobId: a.job.id,
-      jobTitle: a.job.title,
-      companyName: a.job.company.name,
-      city: a.job.company.city,
-      state: a.job.company.state,
-      appliedAt: a.appliedAt,
-      status: a.status,
-    })),
-    meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
-  };
-}
+    return {
+      data: applications.map((a) => ({
+        id: a.id,
+        jobId: a.job.id,
+        jobTitle: a.job.title,
+        companyName: a.job.company.name,
+        city: a.job.company.city,
+        state: a.job.company.state,
+        appliedAt: a.appliedAt,
+        status: a.status,
+      })),
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
 
   async applyToJob(jobId: number, candidateId: number) {
     const job = await this.prisma.job.findFirst({
@@ -767,6 +778,7 @@ export class JobsService {
         history: {
           create: {
             status: 'RECEBIDA',
+            actor: 'CANDIDATE',
             note: 'Candidatura realizada pelo app',
           },
         },

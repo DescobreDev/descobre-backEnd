@@ -21,6 +21,31 @@ export class OnboardingService {
     });
   }
 
+  // NOVO: busca de setores (autocomplete)
+  async getSectors(search?: string) {
+    return this.prisma.sector.findMany({
+      where: search
+        ? { name: { contains: search, mode: 'insensitive' } }
+        : undefined,
+      orderBy: { name: 'asc' },
+      take: 20,
+    });
+  }
+
+  // NOVO: busca de posições dentro de um setor (autocomplete em cascata)
+  async getPositions(sectorId: number, search?: string) {
+    return this.prisma.position.findMany({
+      where: {
+        sectorId,
+        ...(search
+          ? { name: { contains: search, mode: 'insensitive' } }
+          : {}),
+      },
+      orderBy: { name: 'asc' },
+      take: 20,
+    });
+  }
+
   async complete(candidateId: number, dto: CompleteOnboardingDto) {
     if (!dto.firstJobSeeker && dto.experiences.length === 0) {
       throw new BadRequestException(
@@ -36,6 +61,10 @@ export class OnboardingService {
       throw new BadRequestException('Selecione ao menos 3 prioridades profissionais.');
     }
 
+    if (dto.contractTypes.length < 1) {
+      throw new BadRequestException('Selecione ao menos 1 regime de contratação aceito.');
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await tx.candidate.update({
         where: { id: candidateId },
@@ -43,6 +72,20 @@ export class OnboardingService {
           profileCompleted: true,
           avatarIndex: dto.avatarIndex ?? null,
           avatarUrl: dto.avatarUrl ?? null,
+
+          // NOVO: preferências de vaga
+          desiredSectorId: dto.desiredSectorId,
+          desiredPositionId: dto.desiredPositionId,
+          desiredSalaryMin: dto.salaryMin ?? null,
+          desiredSalaryMax: dto.salaryMax ?? null,
+          salaryNegotiable: dto.salaryNegotiable ?? false,
+          contractTypes: dto.contractTypes as any,
+          experienceLevel: dto.experienceLevel as any,
+          acceptsTravel: dto.acceptsTravel,
+
+          // NOVO: localização
+          city: dto.city,
+          state: dto.state,
         },
       });
 
