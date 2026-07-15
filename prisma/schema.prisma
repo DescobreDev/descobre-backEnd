@@ -152,6 +152,7 @@ model Sector {
   id        Int        @id @default(autoincrement())
   name      String     @unique
   positions Position[]
+  candidatesDesiring Candidate[]
 }
 
 model Position {
@@ -159,6 +160,7 @@ model Position {
   name     String @unique
   sectorId Int
   sector   Sector @relation(fields: [sectorId], references: [id])
+  candidatesDesiring Candidate[]
 }
 
 model Company {
@@ -294,6 +296,8 @@ model Candidate {
   birthDate DateTime?
   cpf       String?   @unique
 
+  affirmativeTypes AffirmativeType[]
+
   profileType          ProfileType?
   profileTypeSecondary ProfileType?
 
@@ -328,6 +332,9 @@ model Candidate {
 
   resume       CandidateResume?
   applications Application[]
+
+  desiredSector     Sector?   @relation(fields: [desiredSectorId], references: [id])
+  desiredPosition   Position? @relation(fields: [desiredPositionId], references: [id])
 
   matches Match[]
 }

@@ -3,6 +3,7 @@ import { ApplicationStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsageService } from '../usage/usage.service';
 import { GeminiService } from '../gemini/gemini.service';
+import { calculateMatchScore } from './match-score.util';
 
 export interface FindJobsForCandidateParams {
   page: number;
@@ -131,10 +132,7 @@ export class JobsService {
     if (!job) throw new NotFoundException('Vaga não encontrada');
 
     const skip = (page - 1) * limit;
-    const where = {
-      jobId,
-      ...(status ? { status } : {}),
-    };
+    const where = { jobId, ...(status ? { status } : {}) };
 
     const [applications, total] = await Promise.all([
       this.prisma.application.findMany({
@@ -151,6 +149,16 @@ export class JobsService {
               phone: true,
               profileType: true,
               profileTypeSecondary: true,
+              desiredPositionId: true,
+              desiredSectorId: true,
+              desiredSalaryMin: true,
+              desiredSalaryMax: true,
+              contractTypes: true,
+              city: true,
+              state: true,
+              acceptsTravel: true,
+              experienceLevel: true,
+              affirmativeTypes: true,
             },
           },
         },
@@ -158,10 +166,34 @@ export class JobsService {
       this.prisma.application.count({ where }),
     ]);
 
-    const dataWithScore = applications.map((app) => ({
-      ...app,
-      compatibility: this.calculateCompatibility(job.profile, app.candidate),
-    }));
+    const dataWithScore = applications.map((app) => {
+      const match = calculateMatchScore({
+        job: {
+          positionId: job.positionId,
+          sectorId: job.sectorId,
+          workFormat: job.workFormat,
+          contractType: job.contractType,
+          salary: job.salary ? Number(job.salary) : null,
+          city: job.city,
+          state: job.state,
+          affirmative: job.affirmative,
+        },
+        jobProfile: job.profile
+          ? {
+            primaryProfile: job.profile.primaryProfile,
+            secondaryProfile: job.profile.secondaryProfile,
+            experienceLevel: job.profile.experienceLevel,
+          }
+          : null,
+        candidate: {
+          ...app.candidate,
+          desiredSalaryMin: app.candidate.desiredSalaryMin ? Number(app.candidate.desiredSalaryMin) : null,
+          desiredSalaryMax: app.candidate.desiredSalaryMax ? Number(app.candidate.desiredSalaryMax) : null,
+        },
+      });
+
+      return { ...app, compatibility: match.finalScore, matchEligible: match.eligible };
+    });
 
     const hiredApplication = job.status === 'HIRED'
       ? await this.prisma.application.findFirst({
@@ -208,14 +240,10 @@ export class JobsService {
         candidate: {
           include: {
             resume: {
-              include: {
-                experiences: true,
-                educations: true,
-                skills: true,
-                languages: true,
-                extras: true,
-              },
+              include: { experiences: true, educations: true, skills: true, languages: true, extras: true },
             },
+            desiredSector: true,
+            desiredPosition: true,
           },
         },
         history: { orderBy: { changedAt: 'desc' } },
@@ -225,35 +253,40 @@ export class JobsService {
 
     if (!application) throw new NotFoundException('Candidatura não encontrada');
 
-    // const compatibility = this.calculateCompatibility(job.profile, application.candidate);
+    const match = calculateMatchScore({
+      job: {
+        positionId: job.positionId,
+        sectorId: job.sectorId,
+        workFormat: job.workFormat,
+        contractType: job.contractType,
+        salary: job.salary ? Number(job.salary) : null,
+        city: job.city,
+        state: job.state,
+        affirmative: job.affirmative,
+      },
+      jobProfile: job.profile
+        ? {
+          primaryProfile: job.profile.primaryProfile,
+          secondaryProfile: job.profile.secondaryProfile,
+          experienceLevel: job.profile.experienceLevel,
+        }
+        : null,
+      candidate: {
+        ...application.candidate,
+        desiredSalaryMin: application.candidate.desiredSalaryMin ? Number(application.candidate.desiredSalaryMin) : null,
+        desiredSalaryMax: application.candidate.desiredSalaryMax ? Number(application.candidate.desiredSalaryMax) : null,
+      },
+    });
 
-    return { ...application, compatibility: null, jobProfile: job.profile, jobStatus: job.status };
-  }
-
-  private calculateCompatibility(jobProfile, candidate) {
-    if (!jobProfile) return 0;
-
-    const safe = (v: number) => v ?? 0;
-    const total = 10;
-
-    const dimensions = [
-      { job: safe(jobProfile.analyst), candidate: safe(candidate.profileAnalyst) },
-      { job: safe(jobProfile.communicator), candidate: safe(candidate.profileCommunicator) },
-      { job: safe(jobProfile.executor), candidate: safe(candidate.profileExecutor) },
-      { job: safe(jobProfile.planner), candidate: safe(candidate.profilePlanner) },
-    ];
-
-    let penalty = 0;
-
-    for (const dim of dimensions) {
-      const diff = Math.abs(dim.job - dim.candidate);
-      const weight = dim.job / total;
-      penalty += diff * weight;
-    }
-
-    const compatibility = (1 - penalty / 5) * 100;
-
-    return Math.max(0, Math.round(compatibility));
+    return {
+      ...application,
+      compatibility: match.finalScore,
+      matchEligible: match.eligible,
+      matchIneligibleReason: match.reasonIneligible,
+      matchBreakdown: match.breakdown,
+      jobProfile: job.profile,
+      jobStatus: job.status,
+    };
   }
 
   async updateApplicationStatus(
