@@ -21,7 +21,6 @@ export class OnboardingService {
     });
   }
 
-  // NOVO: busca de setores (autocomplete)
   async getSectors(search?: string) {
     return this.prisma.sector.findMany({
       where: search
@@ -32,7 +31,6 @@ export class OnboardingService {
     });
   }
 
-  // NOVO: busca de posições dentro de um setor (autocomplete em cascata)
   async getPositions(sectorId: number, search?: string) {
     return this.prisma.position.findMany({
       where: {
@@ -73,7 +71,6 @@ export class OnboardingService {
           avatarIndex: dto.avatarIndex ?? null,
           avatarUrl: dto.avatarUrl ?? null,
 
-          // NOVO: preferências de vaga
           desiredSectorId: dto.desiredSectorId,
           desiredPositionId: dto.desiredPositionId,
           desiredSalaryMin: dto.salaryMin ?? null,
@@ -83,7 +80,6 @@ export class OnboardingService {
           experienceLevel: dto.experienceLevel as any,
           acceptsTravel: dto.acceptsTravel,
 
-          // NOVO: localização
           city: dto.city,
           state: dto.state,
         },
