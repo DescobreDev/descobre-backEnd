@@ -116,9 +116,7 @@ export class AsaasService {
   }
 
   async createSubscription(dto: CreateSubscriptionDto): Promise<{ id: string; status: string }> {
-    const nextDueDate = new Date();
-    nextDueDate.setDate(nextDueDate.getDate() + 1);
-    const dueDateStr = nextDueDate.toISOString().split('T')[0];
+    const dueDateStr = new Date().toISOString().split('T')[0]; // hoje
 
     return this.request('post', '/subscriptions', {
       customer: dto.customerId,
