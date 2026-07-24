@@ -41,7 +41,6 @@ export enum LanguageLevel {
   NATIVO = 'NATIVO',
 }
 
-// NOVO: espelham os enums globais do schema (ContractType / ExperienceLevel)
 export enum ContractType {
   CLT = 'CLT',
   PJ = 'PJ',
@@ -171,7 +170,6 @@ export class CompleteOnboardingDto {
   @IsString()
   avatarUrl?: string | null;
 
-  // --- NOVO: preferências de vaga ---
   @IsInt()
   @Min(1)
   desiredSectorId: number;

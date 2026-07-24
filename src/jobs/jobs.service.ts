@@ -835,4 +835,158 @@ export class JobsService {
       application,
     };
   }
+
+  // --- Detalhe da candidatura para o candidato ---
+  async findApplicationDetailForCandidate(applicationId: number, candidateId: number) {
+    const application = await this.prisma.application.findFirst({
+      where: { id: applicationId, candidateId },
+      include: {
+        job: {
+          include: {
+            company: {
+              select: { id: true, name: true, city: true, state: true, about: true, site: true },
+            },
+            profile: true,
+            benefits: { include: { benefit: true } },
+          },
+        },
+        history: { orderBy: { changedAt: 'desc' } },
+        interviewEvents: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+
+    if (!application) throw new NotFoundException('Candidatura não encontrada.');
+
+    const candidate = await this.prisma.candidate.findUnique({ where: { id: candidateId } });
+    if (!candidate) throw new NotFoundException('Candidato não encontrado.');
+
+    const match = calculateMatchScore({
+      job: {
+        positionId: application.job.positionId,
+        sectorId: application.job.sectorId,
+        workFormat: application.job.workFormat,
+        contractType: application.job.contractType,
+        salary: application.job.salary ? Number(application.job.salary) : null,
+        city: application.job.city,
+        state: application.job.state,
+        affirmative: application.job.affirmative,
+      },
+      jobProfile: application.job.profile
+        ? {
+          primaryProfile: application.job.profile.primaryProfile,
+          secondaryProfile: application.job.profile.secondaryProfile,
+          experienceLevel: application.job.profile.experienceLevel,
+        }
+        : null,
+      candidate: {
+        ...candidate,
+        desiredSalaryMin: candidate.desiredSalaryMin ? Number(candidate.desiredSalaryMin) : null,
+        desiredSalaryMax: candidate.desiredSalaryMax ? Number(candidate.desiredSalaryMax) : null,
+      },
+    });
+
+    return {
+      id: application.id,
+      status: application.status,
+      appliedAt: application.appliedAt,
+      updatedAt: application.updatedAt,
+      compatibility: match.finalScore,
+      job: {
+        id: application.job.id,
+        title: application.job.title,
+        description: application.job.description,
+        workFormat: application.job.workFormat,
+        contractType: application.job.contractType,
+        jobType: application.job.jobType,
+        salary: application.job.salary ? Number(application.job.salary) : null,
+        city: application.job.city,
+        state: application.job.state,
+        benefits: application.job.benefits.map((b) => b.benefit.name),
+        customBenefits: application.job.customBenefits,
+        company: application.job.company,
+      },
+      history: application.history,
+      interviewEvents: application.interviewEvents,
+    };
+  }
+
+  // --- Candidato responde ao convite de entrevista ---
+  async respondToInterviewByCandidate(
+    applicationId: number,
+    candidateId: number,
+    response: 'CONFIRMED' | 'DECLINED' | 'RESCHEDULED',
+    note?: string,
+    proposedAt?: Date,
+  ) {
+    const application = await this.prisma.application.findFirst({
+      where: { id: applicationId, candidateId },
+    });
+    if (!application) throw new NotFoundException('Candidatura não encontrada.');
+    if (application.status !== 'ENTREVISTA') {
+      throw new BadRequestException('Esta candidatura não está em fase de entrevista.');
+    }
+    if (response === 'RESCHEDULED' && !proposedAt) {
+      throw new BadRequestException('Informe a data/horário proposto para remarcação.');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const event = await tx.interviewEvent.create({
+        data: {
+          applicationId,
+          type: response,
+          note,
+          proposedAt: response === 'RESCHEDULED' ? new Date(proposedAt as Date) : undefined,
+        },
+      });
+
+      // Recusar o convite encerra a candidatura
+      if (response === 'DECLINED') {
+        await tx.application.update({
+          where: { id: applicationId },
+          data: { status: 'DESISTIU' },
+        });
+        await tx.applicationHistory.create({
+          data: {
+            applicationId,
+            status: 'DESISTIU',
+            actor: 'CANDIDATE',
+            note: note ?? 'Candidato recusou o convite para entrevista.',
+          },
+        });
+      }
+
+      return event;
+    });
+  }
+
+  // --- Candidato cancela a candidatura ---
+  async cancelApplication(applicationId: number, candidateId: number) {
+    const application = await this.prisma.application.findFirst({
+      where: { id: applicationId, candidateId },
+    });
+    if (!application) throw new NotFoundException('Candidatura não encontrada.');
+    if (application.status === 'APROVADO') {
+      throw new BadRequestException('Não é possível cancelar uma candidatura já aprovada.');
+    }
+    if (application.status === 'DESISTIU') {
+      return { success: true };
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.application.update({
+        where: { id: applicationId },
+        data: { status: 'DESISTIU' },
+      });
+      await tx.applicationHistory.create({
+        data: {
+          applicationId,
+          status: 'DESISTIU',
+          actor: 'CANDIDATE',
+          note: 'Candidato cancelou a candidatura.',
+        },
+      });
+    });
+
+    return { success: true };
+  }
 }

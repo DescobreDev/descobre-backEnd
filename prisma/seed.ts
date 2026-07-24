@@ -31,7 +31,6 @@ const BENEFITS = [
 ];
 
 async function main() {
-  // Planos
   await prisma.plan.createMany({
     data: [
       {
