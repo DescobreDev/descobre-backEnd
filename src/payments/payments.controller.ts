@@ -15,6 +15,23 @@ export class PaymentsController {
         private readonly prisma: PrismaService,
     ) { }
 
+    @Get('token')
+    async getCardToken(@Req() req) {
+        const companyId = req.user.companyId;
+        if (!companyId) throw new BadRequestException('Empresa não vinculada.');
+
+        const cardToken = await this.prisma.cardToken.findUnique({ where: { companyId } });
+        if (!cardToken) {
+            return { creditCardToken: null };
+        }
+
+        return {
+            creditCardToken: cardToken.token,
+            lastFour: cardToken.lastFour,
+            brand: cardToken.brand,
+        };
+    }
+
     @Post('customer')
     @HttpCode(HttpStatus.CREATED)
     async createCustomer(@Req() req, @Body() body: {
@@ -100,6 +117,15 @@ export class PaymentsController {
         const companyId = req.user.companyId;
         if (!companyId) throw new BadRequestException('Empresa não vinculada.');
 
+        const existing = await this.prisma.cardToken.findUnique({ where: { companyId } });
+        if (existing) {
+            return {
+                creditCardToken: existing.token,
+                creditCardNumber: `****${existing.lastFour}`,
+                creditCardBrand: existing.brand,
+            };
+        }
+
         const result = await this.asaas.tokenizeCard(body);
 
         await this.prisma.cardToken.upsert({
@@ -138,7 +164,11 @@ export class PaymentsController {
 
         const { id: asaasSubId, status } = await this.asaas.createSubscription({
             customerId: company.asaasCustomerId,
-            creditCardToken: body.creditCardToken,
+            creditCardToken: (
+                await this.prisma.cardToken.findUnique({
+                    where: { companyId },
+                })
+            )?.token ?? body.creditCardToken,
             planId: plan.id,
             value: body.isAnnual ? Number(plan.annualPrice) : Number(plan.price),
             description: body.isAnnual ? `Plano ${plan.name} - Anual` : `Plano ${plan.name} - Mensal`,
