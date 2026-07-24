@@ -116,7 +116,7 @@ export class AsaasService {
   }
 
   async createSubscription(dto: CreateSubscriptionDto): Promise<{ id: string; status: string }> {
-    const dueDateStr = new Date().toISOString().split('T')[0]; // hoje
+    const dueDateStr = new Date().toISOString().split('T')[0];
 
     return this.request('post', '/subscriptions', {
       customer: dto.customerId,

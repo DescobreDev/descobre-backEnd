@@ -8,7 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { CpfApiService } from '../cpf-api/cpf-api.service'; 
+import { CpfApiService } from '../cpf-api/cpf-api.service';
 
 @Injectable()
 export class CandidateAuthService {
@@ -16,11 +16,9 @@ export class CandidateAuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private cpfApiService: CpfApiService,
-  ) {}
+  ) { }
 
-  async register(data: { cpf: string; password: string }) {
-    const { cpf, password } = data;
-
+  async checkCpf(cpf: string) {
     const cleanCpf = cpf.replace(/\D/g, '');
 
     if (!this.isValidCpf(cleanCpf)) {
@@ -32,8 +30,7 @@ export class CandidateAuthService {
     });
     if (existing) throw new ConflictException('CPF já cadastrado.');
 
-    let cpfData: { name: string; email?: string; phone?: string; birthDate?: string };
-    
+    let cpfData: { name: string; birthDate?: string };
     try {
       cpfData = await this.cpfApiService.lookup(cleanCpf);
     } catch {
@@ -42,15 +39,45 @@ export class CandidateAuthService {
       );
     }
 
+    if (!cpfData.name) {
+      throw new BadRequestException('CPF não encontrado na base de dados.');
+    }
+
+    return {
+      name: cpfData.name,
+      birthDate: cpfData.birthDate ?? null,
+    };
+  }
+
+  async register(data: {
+    cpf: string;
+    password: string;
+    name: string;
+    birthDate?: string | null;
+  }) {
+    const { cpf, password, name, birthDate } = data;
+    const cleanCpf = cpf.replace(/\D/g, '');
+
+    if (!this.isValidCpf(cleanCpf)) {
+      throw new BadRequestException('CPF inválido.');
+    }
+    if (!name) {
+      throw new BadRequestException('Nome não informado.');
+    }
+
+    const existing = await this.prisma.candidate.findUnique({
+      where: { cpf: cleanCpf },
+    });
+    if (existing) throw new ConflictException('CPF já cadastrado.');
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const candidate = await this.prisma.candidate.create({
       data: {
         cpf: cleanCpf,
-        name: cpfData.name,
-        email: cpfData.email ?? `${cleanCpf}@sem-email.com`,
-        phone: cpfData.phone ?? null,
-        birthDate: cpfData.birthDate ? new Date(cpfData.birthDate) : null,
+        name,
+        email: `${cleanCpf}@sem-email.com`,
+        birthDate: birthDate ? this.parseBrDate(birthDate) : null,
         password: hashedPassword,
         isVerified: true,
       },
@@ -64,6 +91,12 @@ export class CandidateAuthService {
         cpf: cleanCpf,
       },
     };
+  }
+
+  private parseBrDate(dateStr: string): Date | null {
+    const [day, month, year] = dateStr.split('/').map(Number);
+    if (!day || !month || !year) return null;
+    return new Date(year, month - 1, day);
   }
 
   async login(data: { cpf: string; password: string }) {
