@@ -78,13 +78,16 @@ export class AsaasService {
   }
 
   async createCustomer(dto: CreateCustomerDto): Promise<{ id: string }> {
-
-    return this.request<{ id: string }>('post', '/customers', {
+    const response = await this.request<{ id: string }>('post', '/customers', {
       name: dto.name,
       cpfCnpj: dto.cpfCnpj.replace(/\D/g, ''),
       email: dto.email,
       mobilePhone: dto.mobilePhone.replace(/\D/g, ''),
     });
+
+    console.log('ASAAS RAW:', response);
+
+    return response;
   }
 
   async cancelSubscription(asaasSubId: string): Promise<void> {

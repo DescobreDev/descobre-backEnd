@@ -34,6 +34,10 @@ export class PaymentsController {
 
         const { id: customerId } = await this.asaas.createCustomer(body);
 
+
+        console.log('ASAAS RESPONSE:', customerId);
+
+
         await this.prisma.company.update({
             where: { id: companyId },
             data: { asaasCustomerId: customerId },
