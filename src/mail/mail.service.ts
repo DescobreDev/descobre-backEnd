@@ -1,9 +1,13 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { verificationCodeEmail } from './templates/verification-code.template';
+
+const BREVO_BASE_URL = 'https://api.brevo.com/v3';
+const SENDER = { email: 'app@descobre.app.br', name: 'Descobre' };
 
 @Injectable()
 export class MailService {
-  private apiKey: string;
-  private baseUrl = 'https://api.brevo.com/v3';
+  private readonly logger = new Logger(MailService.name);
+  private readonly apiKey: string;
 
   constructor() {
     const apiKey = process.env.BREVO_API_KEY;
@@ -12,12 +16,12 @@ export class MailService {
   }
 
   private async post(endpoint: string, body: object) {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const response = await fetch(`${BREVO_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'api-key': this.apiKey,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify(body),
     });
@@ -31,40 +35,20 @@ export class MailService {
   }
 
   async sendVerificationCode(email: string, code: string, name: string) {
+    const { html, text } = verificationCodeEmail({ name, code });
+
     try {
       await this.post('/smtp/email', {
-        sender: { email: 'app@descobre.app.br', name: 'Descobre' },
+        sender: SENDER,
         to: [{ email, name }],
         subject: 'Seu código de verificação',
-        htmlContent: `
-          <div style="font-family: sans-serif; max-width: 420px; margin: 0 auto; padding: 32px;">
-            <h2 style="color: #1F2937;">Confirme seu email</h2>
-            <p style="color: #4B5563;">Olá, <strong>${name}</strong>! Use o código abaixo para ativar sua conta:</p>
-            <div style="
-              font-size: 38px;
-              font-weight: 700;
-              letter-spacing: 10px;
-              color: #4F46E5;
-              text-align: center;
-              padding: 24px;
-              background: #F5F3FF;
-              border-radius: 12px;
-              margin: 24px 0;
-            ">
-              ${code}
-            </div>
-            <p style="color: #6B7280; font-size: 14px;">
-              Este código expira em <strong>15 minutos</strong>.<br/>
-              Se você não criou uma conta, ignore este email.
-            </p>
-          </div>
-        `,
+        htmlContent: html,
+        textContent: text,
       });
 
-      console.log('enviado');
-
+      this.logger.log(`Código de verificação enviado para ${email}`);
     } catch (error) {
-      console.error('[MAIL_ERROR]', error);
+      this.logger.error(`Falha ao enviar código para ${email}`, error as Error);
       throw new InternalServerErrorException('Erro ao enviar email');
     }
   }

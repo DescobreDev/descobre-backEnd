@@ -1,118 +1,108 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Request, Query } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { ApplicationStatus } from '@prisma/client';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { JobsService } from './jobs.service';
-import { PlanGuard } from '../guards/plan.guard';
+import { CandidateAuthGuard } from '../candidate-auth/guards/candidate-auth.guard';
+import { CandidateOptionalAuthGuard } from '../candidate-auth/guards/candidate-optional-auth.guard';
+import { ApplyJobDto } from './dto/apply-job';
+interface MaybeAuthRequest extends Request {
+  user?: { id: number; email: string };
+}
 
-@Controller('jobs')
-@UseGuards(AuthGuard('jwt'), PlanGuard)
-export class JobsController {
-  constructor(private jobsService: JobsService) { }
+interface AuthRequest extends Request {
+  user: { id: number; email: string };
+}
 
-  @Post()
-  create(@Body() body: any, @Request() req) {
-    return this.jobsService.create(req.user.companyId, body);
-  }
+@Controller('candidate/jobs')
+export class CandidateJobsController {
+  constructor(private readonly jobsService: JobsService) {}
 
   @Get()
-  async findAll(@Request() req, @Query('page') page = '1', @Query('limit') limit = '10') {
-    return this.jobsService.findAll(req.user.companyId, +page, +limit);
+  @UseGuards(CandidateOptionalAuthGuard)
+  findAll(
+    @Request() req: MaybeAuthRequest,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('search') search?: string,
+    @Query('workFormat') workFormat?: 'REMOTE' | 'HYBRID' | 'ONSITE',
+    @Query('contractType') contractType?: 'CLT' | 'PJ' | 'FREELANCER',
+    @Query('jobType') jobType?: 'STANDARD' | 'INTERNSHIP' | 'TRAINEE',
+    @Query('experienceLevel') experienceLevel?: 'ESTAGIO' | 'JUNIOR' | 'PLENO' | 'SENIOR' | 'ESPECIALISTA',
+    @Query('affirmative') affirmative?: 'NOT_INFORMED' | 'PCD' | 'WOMEN' | 'FIFTY_PLUS' | 'LGBTQIAPN',
+    @Query('sectorId') sectorId?: string,
+    @Query('positionId') positionId?: string,
+    @Query('benefitIds') benefitIds?: string,
+    @Query('salaryMin') salaryMin?: string,
+    @Query('salaryMax') salaryMax?: string,
+    @Query('city') city?: string,
+    @Query('state') state?: string,
+  ) {
+    return this.jobsService.findForCandidates({
+      page: +page,
+      limit: +limit,
+      search,
+      workFormat,
+      contractType,
+      jobType,
+      experienceLevel,
+      affirmative,
+      sectorId: sectorId ? +sectorId : undefined,
+      positionId: positionId ? +positionId : undefined,
+      benefitIds: benefitIds
+        ? benefitIds.split(',').map((id) => +id).filter((id) => !Number.isNaN(id))
+        : undefined,
+      salaryMin: salaryMin ? +salaryMin : undefined,
+      salaryMax: salaryMax ? +salaryMax : undefined,
+      city,
+      state,
+      candidateId: req.user?.id,
+    });
   }
 
-  @Get('benefits')
-  getAllBenefits() {
-    return this.jobsService.getAllBenefits();
-  }
+  // --- Opções para o filtro avançado ---
 
-  @Get('sector')
-  findAllArea() {
+  @Get('filters/sectors')
+  findSectors() {
     return this.jobsService.findAllSector();
   }
 
-  @Get('sector/:id/positions')
-  findPositions(@Param('id') id: number) {
-    return this.jobsService.findPositionsBySector(id);
+  @Get('filters/sectors/:sectorId/positions')
+  findPositionsBySector(@Param('sectorId', ParseIntPipe) sectorId: number) {
+    return this.jobsService.findPositionsBySector(sectorId);
   }
 
-  @Get('test/candidates')
-  findAllCandidates() {
-    return this.jobsService.findAllCandidates();
+  @Get('filters/benefits')
+  findBenefits() {
+    return this.jobsService.getAllBenefits();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Request() req) {
-    return this.jobsService.findOne(+id, req.user.companyId);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() body: any, @Request() req) {
-    return this.jobsService.update(+id, req.user.companyId, body);
-  }
-
-  @Post(':id/status')
-  updateStatusJob(@Param('id') id: number, @Body('status') status: 'ACTIVE' | 'INACTIVE', @Request() req) {
-    return this.jobsService.updateStatusJob(id, req.user.companyId, status);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string, @Request() req) {
-    return this.jobsService.remove(+id, req.user.companyId);
-  }
-
-  @Get(':id/candidates')
-  findCandidates(
-    @Param('id') id: string,
-    @Request() req,
-    @Query('page') page = '1',
-    @Query('limit') limit = '10',
-    @Query('status') status?: ApplicationStatus,
+  @UseGuards(CandidateOptionalAuthGuard)
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Request() req: MaybeAuthRequest,
   ) {
-    return this.jobsService.findCandidates(+id, req.user.companyId, +page, +limit, status);
+    return this.jobsService.findOneForCandidate(id, req.user?.id);
   }
 
-  @Get(':id/candidates/:applicationId')
-  findCandidate(
-    @Param('id') jobId: string,
-    @Param('applicationId') applicationId: string,
-    @Request() req,
+  @Post(':id/apply')
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(CandidateAuthGuard)
+  apply(
+    @Param('id', ParseIntPipe) jobId: number,
+    @Request() req: AuthRequest,
+    @Body() _dto: ApplyJobDto,
   ) {
-    return this.jobsService.findCandidate(+jobId, +applicationId, req.user.companyId);
-  }
-
-  @Patch(':id/candidates/:applicationId/status')
-  updateApplicationStatus(
-    @Param('id') jobId: string,
-    @Param('applicationId') applicationId: string,
-    @Body('status') status: ApplicationStatus,
-    @Body('note') note: string,
-    @Body('interviewData') interviewData: {
-      type: 'presencial' | 'online';
-      scheduledAt: Date;
-      meetingLink?: string;
-      address?: string;
-    },
-    @Request() req,
-  ) {
-    return this.jobsService.updateApplicationStatus(
-      +jobId,
-      +applicationId,
-      req.user.companyId,
-      status,
-      note,
-      interviewData,
-    );
-  }
-
-  @Patch(':id/candidates/:applicationId/interview-response')
-  respondToInterview(@Param('applicationId') applicationId: string, @Body() body) {
-    return this.jobsService.respondToInterview(+applicationId, body.status, body.note, body.proposedAt);
-  }
-  @Post(':id/candidates')
-  attachCandidate(
-    @Param('id') jobId: string,
-    @Body('candidateId') candidateId: string,
-    @Request() req,
-  ) {
-    return this.jobsService.attachCandidate(+jobId, +candidateId, req.user.companyId);
+    return this.jobsService.applyToJob(jobId, req.user.id);
   }
 }

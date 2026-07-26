@@ -11,7 +11,16 @@ export interface FindJobsForCandidateParams {
   search?: string;
   workFormat?: 'REMOTE' | 'HYBRID' | 'ONSITE';
   contractType?: 'CLT' | 'PJ' | 'FREELANCER';
+  jobType?: 'STANDARD' | 'INTERNSHIP' | 'TRAINEE';
+  experienceLevel?: 'ESTAGIO' | 'JUNIOR' | 'PLENO' | 'SENIOR' | 'ESPECIALISTA';
+  affirmative?: 'NOT_INFORMED' | 'PCD' | 'WOMEN' | 'FIFTY_PLUS' | 'LGBTQIAPN';
   sectorId?: number;
+  positionId?: number;
+  benefitIds?: number[];
+  salaryMin?: number;
+  salaryMax?: number;
+  city?: string;
+  state?: string;
   candidateId?: number;
 }
 
@@ -401,7 +410,7 @@ export class JobsService {
   }
 
   async getAllBenefits() {
-    return this.prisma.benefit.findMany();
+    return this.prisma.benefit.findMany({ orderBy: { name: 'asc' } });
   }
 
   async findOne(id: number, companyId: number) {
@@ -606,7 +615,16 @@ export class JobsService {
       search,
       workFormat,
       contractType,
+      jobType,
+      experienceLevel,
+      affirmative,
       sectorId,
+      positionId,
+      benefitIds,
+      salaryMin,
+      salaryMax,
+      city,
+      state,
       candidateId,
     } = params;
 
@@ -625,7 +643,22 @@ export class JobsService {
       }),
       ...(workFormat && { workFormat }),
       ...(contractType && { contractType }),
+      ...(jobType && { jobType }),
+      ...(affirmative && { affirmative }),
       ...(sectorId && { sectorId }),
+      ...(positionId && { positionId }),
+      ...(city && { city: { equals: city, mode: 'insensitive' } }),
+      ...(state && { state: { equals: state, mode: 'insensitive' } }),
+      ...(experienceLevel && { profile: { experienceLevel } }),
+      ...(benefitIds && benefitIds.length > 0 && {
+        benefits: { some: { benefitId: { in: benefitIds } } },
+      }),
+      ...((salaryMin !== undefined || salaryMax !== undefined) && {
+        salary: {
+          ...(salaryMin !== undefined && { gte: salaryMin }),
+          ...(salaryMax !== undefined && { lte: salaryMax }),
+        },
+      }),
     };
 
     const [jobs, total] = await Promise.all([
@@ -646,6 +679,8 @@ export class JobsService {
           state: true,
           deadline: true,
           createdAt: true,
+          sectorId: true,
+          positionId: true,
           company: {
             select: {
               id: true,
@@ -657,7 +692,9 @@ export class JobsService {
           benefits: {
             select: { benefit: { select: { name: true } } },
           },
-          sectorId: true,
+          profile: {
+            select: { experienceLevel: true },
+          },
         },
       }),
       this.prisma.job.count({ where }),
@@ -675,10 +712,11 @@ export class JobsService {
       appliedJobIds = new Set(applications.map((a) => a.jobId));
     }
 
-    const formatted = jobs.map((job) => ({
+    const formatted = jobs.map(({ profile, ...job }) => ({
       ...job,
       salary: job.salary ? Number(job.salary) : null,
       benefits: job.benefits.map((b) => b.benefit.name),
+      experienceLevel: profile?.experienceLevel ?? null,
       alreadyApplied: appliedJobIds.has(job.id),
     }));
 
