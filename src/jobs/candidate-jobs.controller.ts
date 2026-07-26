@@ -26,6 +26,7 @@ interface AuthRequest extends Request {
 @Controller('candidate/jobs')
 export class CandidateJobsController {
   constructor(private readonly jobsService: JobsService) {}
+
   @Get()
   @UseGuards(CandidateOptionalAuthGuard)
   findAll(
@@ -35,7 +36,16 @@ export class CandidateJobsController {
     @Query('search') search?: string,
     @Query('workFormat') workFormat?: 'REMOTE' | 'HYBRID' | 'ONSITE',
     @Query('contractType') contractType?: 'CLT' | 'PJ' | 'FREELANCER',
+    @Query('jobType') jobType?: 'STANDARD' | 'INTERNSHIP' | 'TRAINEE',
+    @Query('experienceLevel') experienceLevel?: 'ESTAGIO' | 'JUNIOR' | 'PLENO' | 'SENIOR' | 'ESPECIALISTA',
+    @Query('affirmative') affirmative?: 'NOT_INFORMED' | 'PCD' | 'WOMEN' | 'FIFTY_PLUS' | 'LGBTQIAPN',
     @Query('sectorId') sectorId?: string,
+    @Query('positionId') positionId?: string,
+    @Query('benefitIds') benefitIds?: string,
+    @Query('salaryMin') salaryMin?: string,
+    @Query('salaryMax') salaryMax?: string,
+    @Query('city') city?: string,
+    @Query('state') state?: string,
   ) {
     return this.jobsService.findForCandidates({
       page: +page,
@@ -43,9 +53,35 @@ export class CandidateJobsController {
       search,
       workFormat,
       contractType,
+      jobType,
+      experienceLevel,
+      affirmative,
       sectorId: sectorId ? +sectorId : undefined,
+      positionId: positionId ? +positionId : undefined,
+      benefitIds: benefitIds
+        ? benefitIds.split(',').map((id) => +id).filter((id) => !Number.isNaN(id))
+        : undefined,
+      salaryMin: salaryMin ? +salaryMin : undefined,
+      salaryMax: salaryMax ? +salaryMax : undefined,
+      city,
+      state,
       candidateId: req.user?.id,
     });
+  }
+
+  @Get('filters/sectors')
+  findSectors() {
+    return this.jobsService.findAllSector();
+  }
+
+  @Get('filters/sectors/:sectorId/positions')
+  findPositionsBySector(@Param('sectorId', ParseIntPipe) sectorId: number) {
+    return this.jobsService.findPositionsBySector(sectorId);
+  }
+
+  @Get('filters/benefits')
+  findBenefits() {
+    return this.jobsService.getAllBenefits();
   }
 
   @Get(':id')
