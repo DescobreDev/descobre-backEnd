@@ -1,15 +1,8 @@
-import { IsArray, ArrayMinSize, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsArray, ArrayMinSize, IsInt } from 'class-validator';
 
-class PriorityItem {
-  priorityId: number;
-  order: number;
-}
-
-export class UpdatePrioritiesDto {
+export class UpdateInterestsDto {
   @IsArray()
-  @ArrayMinSize(3, { message: 'Selecione ao menos 3 prioridades profissionais.' })
-  @ValidateNested({ each: true })
-  @Type(() => PriorityItem)
-  priorities: PriorityItem[];
+  @ArrayMinSize(1, { message: 'Selecione ao menos 1 interesse.' })
+  @IsInt({ each: true })
+  interestIds: number[];
 }
