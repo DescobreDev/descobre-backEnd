@@ -1,6 +1,9 @@
-import { IsOptional, IsString, IsBoolean, IsInt, IsNumber, IsArray, ArrayMinSize } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsInt } from 'class-validator';
 
 export class UpdateProfileDto {
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() phone?: string;
+
   @IsOptional() @IsInt() avatarIndex?: number;
   @IsOptional() @IsString() avatarUrl?: string;
 
