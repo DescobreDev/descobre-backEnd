@@ -15,9 +15,12 @@ import { CandidateAuthModule } from './candidate-auth/candidate-auth.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { DiscModule } from './disc/disc.module';
 import { MatchModule } from './match/match.module';
+import { CandidateProfileModule } from './candidate-profile/candidate-profile.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, UsageModule, JobsModule, PaymentsModule, GeminiModule, DashboardModule, CandidateAuthModule, OnboardingModule, DiscModule, MatchModule],
+  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, 
+    UsageModule, JobsModule, PaymentsModule, GeminiModule, DashboardModule, 
+    CandidateAuthModule, OnboardingModule, DiscModule, MatchModule, CandidateProfileModule],
   controllers: [AppController],
   providers: [AppService],
 })
