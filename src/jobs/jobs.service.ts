@@ -647,7 +647,7 @@ export class JobsService {
       ...(affirmative && { affirmative }),
       ...(sectorId && { sectorId }),
       ...(positionId && { positionId }),
-      ...(city && { city: { equals: city, mode: 'insensitive' } }),
+      ...(city && { city: { contains: city, mode: 'insensitive' } }),
       ...(state && { state: { equals: state, mode: 'insensitive' } }),
       ...(experienceLevel && { profile: { experienceLevel } }),
       ...(benefitIds && benefitIds.length > 0 && {
