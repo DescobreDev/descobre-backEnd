@@ -39,6 +39,7 @@ export class OnboardingService {
           : {}),
       },
       orderBy: { name: 'asc' },
+      take: 20,
     });
   }
 
