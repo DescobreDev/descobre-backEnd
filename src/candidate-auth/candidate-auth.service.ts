@@ -126,6 +126,8 @@ export class CandidateAuthService {
         email: candidate.email,
         phone: candidate.phone,
         profileCompleted: candidate.profileCompleted,
+        city: candidate.city,
+        state: candidate.state,
       },
     };
   }
