@@ -45,11 +45,21 @@ export class LoginDto {
 }
 
 export class ForgotPasswordDto {
+  @IsEmail({}, { message: 'Email inválido.' })
+  @Transform(({ value }: { value: string }) => value?.toLowerCase().trim())
   email: string;
 }
 
 export class ResetPasswordDto {
+  @IsEmail({}, { message: 'Email inválido.' })
+  @Transform(({ value }: { value: string }) => value?.toLowerCase().trim())
   email: string;
+
+  @IsString()
+  @Length(6, 6, { message: 'O código deve ter 6 dígitos.' })
   code: string;
+
+  @IsString()
+  @MinLength(8, { message: 'A senha deve ter no mínimo 8 caracteres.' })
   newPassword: string;
 }
