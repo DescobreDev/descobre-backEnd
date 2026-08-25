@@ -241,4 +241,103 @@ export class AuthService {
 
     return { access_token: token };
   }
+
+  // ─── Forgot Password ──────────────────────────────────────────────────────────
+
+  async forgotPassword(data: { email: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    // Não revela se o e-mail existe ou não (evita enumeração de usuários)
+    if (!user) {
+      return { message: 'Se o e-mail existir, um código foi enviado.' };
+    }
+
+    // Throttle
+    if (user.lastResetCodeSentAt) {
+      const diff = Date.now() - user.lastResetCodeSentAt.getTime();
+      if (diff < RESEND_COOLDOWN_MS) {
+        const wait = Math.ceil((RESEND_COOLDOWN_MS - diff) / 1000);
+        throw new BadRequestException(
+          `Aguarde ${wait}s antes de solicitar um novo código.`,
+        );
+      }
+    }
+
+    const code = generateCode();
+    const hashedCode = await bcrypt.hash(code, 10);
+
+    await this.prisma.user.update({
+      where: { email: data.email },
+      data: {
+        resetPasswordCode: hashedCode,
+        resetPasswordExpires: new Date(Date.now() + 15 * 60 * 1000),
+        resetPasswordAttempts: 0,
+        lastResetCodeSentAt: new Date(),
+      },
+    });
+
+    await this.mailService.sendPasswordResetCode(user.email, code, user.name);
+
+    return { message: 'Se o e-mail existir, um código foi enviado.' };
+  }
+
+  // ─── Reset Password ───────────────────────────────────────────────────────────
+
+  async resetPassword(data: { email: string; code: string; newPassword: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Código inválido ou expirado.');
+    }
+
+    if (user.resetPasswordAttempts >= MAX_ATTEMPTS) {
+      throw new BadRequestException('Muitas tentativas. Solicite um novo código.');
+    }
+
+    if (
+      !user.resetPasswordExpires ||
+      user.resetPasswordExpires < new Date()
+    ) {
+      throw new BadRequestException('Código expirado. Solicite um novo.');
+    }
+
+    const codeMatch =
+      user.resetPasswordCode &&
+      (await bcrypt.compare(data.code, user.resetPasswordCode));
+
+    if (!codeMatch) {
+      await this.prisma.user.update({
+        where: { email: data.email },
+        data: { resetPasswordAttempts: { increment: 1 } },
+      });
+
+      const remaining = MAX_ATTEMPTS - (user.resetPasswordAttempts + 1);
+      throw new BadRequestException(
+        remaining > 0
+          ? `Código inválido. ${remaining} tentativa(s) restante(s).`
+          : 'Muitas tentativas. Solicite um novo código.',
+      );
+    }
+
+    validatePassword(data.newPassword);
+
+    const hashedPassword = await bcrypt.hash(data.newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { email: data.email },
+      data: {
+        password: hashedPassword,
+        resetPasswordCode: null,
+        resetPasswordExpires: null,
+        resetPasswordAttempts: 0,
+        lastResetCodeSentAt: null,
+      },
+    });
+
+    return { message: 'Senha redefinida com sucesso.' };
+  }
 }

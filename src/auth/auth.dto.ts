@@ -43,3 +43,13 @@ export class LoginDto {
   @IsOptional()
   rememberMe?: boolean;
 }
+
+export class ForgotPasswordDto {
+  email: string;
+}
+
+export class ResetPasswordDto {
+  email: string;
+  code: string;
+  newPassword: string;
+}

@@ -224,6 +224,11 @@ model User {
   verificationAttempts    Int       @default(0) // evita brute-force
   lastCodeSentAt          DateTime? // throttle de reenvio
 
+  resetPasswordCode       String?
+  resetPasswordExpires    DateTime?
+  resetPasswordAttempts   Int       @default(0)
+  lastResetCodeSentAt     DateTime?
+
   company Company? @relation(fields: [companyId], references: [id])
 }
 

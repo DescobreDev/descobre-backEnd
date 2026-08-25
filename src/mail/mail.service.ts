@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { verificationCodeEmail } from './templates/verification-code.template';
+import { passwordResetEmail } from './templates/password-reset.template';
 
 const BREVO_BASE_URL = 'https://api.brevo.com/v3';
 const SENDER = { email: 'app@descobre.app.br', name: 'Descobre' };
@@ -32,6 +33,25 @@ export class MailService {
     }
 
     return response.json();
+  }
+
+  async sendPasswordResetCode(email: string, code: string, name: string) {
+    const { html, text } = passwordResetEmail({ name, code });
+
+    try {
+      await this.post('/smtp/email', {
+        sender: SENDER,
+        to: [{ email, name }],
+        subject: 'Redefinição de senha',
+        htmlContent: html,
+        textContent: text,
+      });
+
+      this.logger.log(`Código de redefinição de senha enviado para ${email}`);
+    } catch (error) {
+      this.logger.error(`Falha ao enviar código de redefinição para ${email}`, error as Error);
+      throw new InternalServerErrorException('Erro ao enviar email');
+    }
   }
 
   async sendVerificationCode(email: string, code: string, name: string) {
