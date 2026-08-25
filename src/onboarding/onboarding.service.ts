@@ -7,7 +7,7 @@ import { CompleteOnboardingDto } from './dto/complete-onboarding';
 
 @Injectable()
 export class OnboardingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async getInterests() {
     return this.prisma.interest.findMany({
@@ -27,7 +27,6 @@ export class OnboardingService {
         ? { name: { contains: search, mode: 'insensitive' } }
         : undefined,
       orderBy: { name: 'asc' },
-      take: 20,
     });
   }
 
@@ -112,7 +111,7 @@ export class OnboardingService {
       });
 
       if (!resume) {
-        resume = await tx.candidateResume.create({  
+        resume = await tx.candidateResume.create({
           data: { candidateId, isGuided: true },
         });
       } else {
