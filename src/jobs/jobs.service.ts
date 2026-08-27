@@ -32,6 +32,18 @@ export class JobsService {
     private geminiService: GeminiService,
   ) { }
 
+  private ensureValidDeadline(deadline: string | Date) {
+    const deadlineDate = new Date(deadline);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (deadlineDate < today) {
+      throw new BadRequestException('A data limite não pode ser anterior à data atual.');
+    }
+
+    return deadlineDate;
+  }
+
   async create(companyId: number, data: any) {
     if (!companyId) throw new BadRequestException('Empresa não vinculada.');
 
@@ -47,7 +59,7 @@ export class JobsService {
     } = data;
 
     if (jobData.deadline) {
-      jobData.deadline = new Date(jobData.deadline);
+      jobData.deadline = this.ensureValidDeadline(jobData.deadline);
     }
 
     const [sector, position] = await Promise.all([
@@ -449,7 +461,7 @@ export class JobsService {
     } = data;
 
     if (jobData.deadline) {
-      jobData.deadline = new Date(jobData.deadline);
+      jobData.deadline = this.ensureValidDeadline(jobData.deadline);
     }
 
     return this.prisma.job.update({
