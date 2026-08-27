@@ -249,12 +249,10 @@ export class AuthService {
       where: { email: data.email },
     });
 
-    // Não revela se o e-mail existe ou não (evita enumeração de usuários)
     if (!user) {
-      return { message: 'Se o e-mail existir, um código foi enviado.' };
+      throw new BadRequestException('Este e-mail não está cadastrado.');
     }
 
-    // Throttle
     if (user.lastResetCodeSentAt) {
       const diff = Date.now() - user.lastResetCodeSentAt.getTime();
       if (diff < RESEND_COOLDOWN_MS) {
@@ -280,7 +278,7 @@ export class AuthService {
 
     await this.mailService.sendPasswordResetCode(user.email, code, user.name);
 
-    return { message: 'Se o e-mail existir, um código foi enviado.' };
+    return { message: 'Código enviado com sucesso.' };
   }
 
   // ─── Reset Password ───────────────────────────────────────────────────────────
