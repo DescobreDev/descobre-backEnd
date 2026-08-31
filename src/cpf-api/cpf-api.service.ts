@@ -9,13 +9,21 @@ export class CpfApiService {
   async lookup(cpf: string): Promise<{
     name: string;
     email?: string;
-    birthDate?: string; 
+    birthDate?: string;
   }> {
-    const response = await axios.get(`${this.baseUrl}/${this.apiKey}/26/${cpf}`, {
-      timeout: 30000,
-    });
+    const response = await axios.get(
+      `${this.baseUrl}/${this.apiKey}/26/${cpf}`,
+      {
+        timeout: 30000,
+      },
+    );
 
     const data = response.data;
+
+    console.log('RESPOSTA API CPF:', {
+      status: data.status,
+      data,
+    });
 
     if (data.status !== 1) {
       throw new Error('CPF não encontrado.');
