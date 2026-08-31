@@ -9,11 +9,14 @@ export class CpfApiService {
   async lookup(cpf: string): Promise<{
     name: string;
     email?: string;
-    birthDate?: string; 
+    birthDate?: string;
   }> {
-    const response = await axios.get(`${this.baseUrl}/${this.apiKey}/26/${cpf}`, {
-      timeout: 8000,
-    });
+    const response = await axios.get(
+      `${this.baseUrl}/${this.apiKey}/26/${cpf}`,
+      {
+        timeout: 30000,
+      },
+    );
 
     const data = response.data;
 
