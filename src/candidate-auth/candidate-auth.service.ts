@@ -33,7 +33,12 @@ export class CandidateAuthService {
     let cpfData: { name: string; birthDate?: string };
     try {
       cpfData = await this.cpfApiService.lookup(cleanCpf);
-    } catch {
+    } catch (error) {
+      console.error('Erro ao validar CPF:', {
+        cpf: cleanCpf,
+        error,
+      });
+
       throw new InternalServerErrorException(
         'Não foi possível validar o CPF. Tente novamente.',
       );
