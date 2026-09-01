@@ -17,7 +17,7 @@ import { CompleteOnboardingDto } from './dto/complete-onboarding';
 @Controller('onboarding')
 @UseGuards(CandidateAuthGuard)
 export class OnboardingController {
-  constructor(private readonly onboardingService: OnboardingService) { }
+  constructor(private readonly onboardingService: OnboardingService) {}
 
   @Get('interests')
   getInterests() {
@@ -44,13 +44,7 @@ export class OnboardingController {
 
   @Post('complete')
   @HttpCode(HttpStatus.OK)
-  complete(
-    @Request() req: any,
-    @Body() dto: CompleteOnboardingDto,
-  ) {
-    return this.onboardingService.complete(
-      req.user.id,
-      dto,
-    );
+  complete(@Request() req: any, @Body() dto: CompleteOnboardingDto) {
+    return this.onboardingService.complete(req.user.id, dto);
   }
 }

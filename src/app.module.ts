@@ -18,9 +18,23 @@ import { MatchModule } from './match/match.module';
 import { CandidateProfileModule } from './candidate-profile/candidate-profile.module';
 
 @Module({
-  imports: [UsersModule, PrismaModule, AuthModule, CompanyModule, PlansModule, 
-    UsageModule, JobsModule, PaymentsModule, GeminiModule, DashboardModule, 
-    CandidateAuthModule, OnboardingModule, DiscModule, MatchModule, CandidateProfileModule],
+  imports: [
+    UsersModule,
+    PrismaModule,
+    AuthModule,
+    CompanyModule,
+    PlansModule,
+    UsageModule,
+    JobsModule,
+    PaymentsModule,
+    GeminiModule,
+    DashboardModule,
+    CandidateAuthModule,
+    OnboardingModule,
+    DiscModule,
+    MatchModule,
+    CandidateProfileModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

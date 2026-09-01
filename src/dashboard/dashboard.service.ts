@@ -68,7 +68,8 @@ export class DashboardService {
         id: j.id,
         title: j.title,
         daysOpen: Math.floor(
-          (now.getTime() - new Date(j.createdAt).getTime()) / (1000 * 60 * 60 * 24),
+          (now.getTime() - new Date(j.createdAt).getTime()) /
+            (1000 * 60 * 60 * 24),
         ),
         deadline: j.deadline,
         candidates: j._count.applications,

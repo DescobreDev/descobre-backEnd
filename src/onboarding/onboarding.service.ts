@@ -1,13 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CompleteOnboardingDto } from './dto/complete-onboarding';
 
 @Injectable()
 export class OnboardingService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async getInterests() {
     return this.prisma.interest.findMany({
@@ -34,9 +31,7 @@ export class OnboardingService {
     return this.prisma.position.findMany({
       where: {
         sectorId,
-        ...(search
-          ? { name: { contains: search, mode: 'insensitive' } }
-          : {}),
+        ...(search ? { name: { contains: search, mode: 'insensitive' } } : {}),
       },
       orderBy: { name: 'asc' },
       take: 20,
@@ -55,11 +50,15 @@ export class OnboardingService {
     }
 
     if (dto.priorities.length < 3) {
-      throw new BadRequestException('Selecione ao menos 3 prioridades profissionais.');
+      throw new BadRequestException(
+        'Selecione ao menos 3 prioridades profissionais.',
+      );
     }
 
     if (dto.contractTypes.length < 1) {
-      throw new BadRequestException('Selecione ao menos 1 regime de contratação aceito.');
+      throw new BadRequestException(
+        'Selecione ao menos 1 regime de contratação aceito.',
+      );
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -88,7 +87,10 @@ export class OnboardingService {
 
       if (dto.interestIds.length > 0) {
         await tx.candidateInterest.createMany({
-          data: dto.interestIds.map((interestId) => ({ candidateId, interestId })),
+          data: dto.interestIds.map((interestId) => ({
+            candidateId,
+            interestId,
+          })),
           skipDuplicates: true,
         });
       }
@@ -129,7 +131,7 @@ export class OnboardingService {
         await tx.resumeEducation.create({
           data: {
             resumeId,
-            level: dto.education.level as any ?? '',
+            level: (dto.education.level as any) ?? '',
             institution: dto.education.institution ?? '',
             course: '',
             startDate: new Date('2000-01-01'),

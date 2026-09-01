@@ -6,15 +6,15 @@ import { CandidateAuthGuard } from 'src/candidate-auth/guards/candidate-auth.gua
 @Controller('disc')
 @UseGuards(CandidateAuthGuard)
 export class DiscController {
-    constructor(private readonly discService: DiscService) { }
+  constructor(private readonly discService: DiscService) {}
 
-    @Get('questions')
-    getQuestions() {
-        return this.discService.getQuestions();
-    }
+  @Get('questions')
+  getQuestions() {
+    return this.discService.getQuestions();
+  }
 
-    @Post('submit')
-    submit(@Req() req: any, @Body() dto: SubmitDiscDto) {
-        return this.discService.submit(req.user.id, dto);
-    }
+  @Post('submit')
+  submit(@Req() req: any, @Body() dto: SubmitDiscDto) {
+    return this.discService.submit(req.user.id, dto);
+  }
 }

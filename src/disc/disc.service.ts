@@ -9,7 +9,9 @@ export class DiscService {
 
   getQuestions() {
     const shuffled = [...DISC_QUESTIONS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3).map(({ id, text, options }) => ({ id, text, options }));
+    return shuffled
+      .slice(0, 3)
+      .map(({ id, text, options }) => ({ id, text, options }));
   }
 
   async submit(candidateId: number, dto: SubmitDiscDto) {
@@ -21,7 +23,9 @@ export class DiscService {
         throw new BadRequestException('Desempate necessário.');
       }
       if (dto.answer3 === primary) {
-        throw new BadRequestException('Perfil secundário não pode ser igual ao principal.');
+        throw new BadRequestException(
+          'Perfil secundário não pode ser igual ao principal.',
+        );
       }
       secondary = dto.answer3 as DiscProfile;
     }

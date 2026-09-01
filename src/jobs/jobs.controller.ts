@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Request, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  Request,
+  Query,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApplicationStatus } from '@prisma/client';
 import { JobsService } from './jobs.service';
@@ -7,7 +18,7 @@ import { PlanGuard } from '../guards/plan.guard';
 @Controller('jobs')
 @UseGuards(AuthGuard('jwt'), PlanGuard)
 export class JobsController {
-  constructor(private jobsService: JobsService) { }
+  constructor(private jobsService: JobsService) {}
 
   @Post()
   create(@Body() body: any, @Request() req) {
@@ -15,7 +26,11 @@ export class JobsController {
   }
 
   @Get()
-  async findAll(@Request() req, @Query('page') page = '1', @Query('limit') limit = '10') {
+  async findAll(
+    @Request() req,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+  ) {
     return this.jobsService.findAll(req.user.companyId, +page, +limit);
   }
 
@@ -50,7 +65,11 @@ export class JobsController {
   }
 
   @Post(':id/status')
-  updateStatusJob(@Param('id') id: number, @Body('status') status: 'ACTIVE' | 'INACTIVE', @Request() req) {
+  updateStatusJob(
+    @Param('id') id: number,
+    @Body('status') status: 'ACTIVE' | 'INACTIVE',
+    @Request() req,
+  ) {
     return this.jobsService.updateStatusJob(id, req.user.companyId, status);
   }
 
@@ -67,7 +86,13 @@ export class JobsController {
     @Query('limit') limit = '10',
     @Query('status') status?: ApplicationStatus,
   ) {
-    return this.jobsService.findCandidates(+id, req.user.companyId, +page, +limit, status);
+    return this.jobsService.findCandidates(
+      +id,
+      req.user.companyId,
+      +page,
+      +limit,
+      status,
+    );
   }
 
   @Get(':id/candidates/:applicationId')
@@ -76,7 +101,11 @@ export class JobsController {
     @Param('applicationId') applicationId: string,
     @Request() req,
   ) {
-    return this.jobsService.findCandidate(+jobId, +applicationId, req.user.companyId);
+    return this.jobsService.findCandidate(
+      +jobId,
+      +applicationId,
+      req.user.companyId,
+    );
   }
 
   @Patch(':id/candidates/:applicationId/status')
@@ -85,7 +114,8 @@ export class JobsController {
     @Param('applicationId') applicationId: string,
     @Body('status') status: ApplicationStatus,
     @Body('note') note: string,
-    @Body('interviewData') interviewData: {
+    @Body('interviewData')
+    interviewData: {
       type: 'presencial' | 'online';
       scheduledAt: Date;
       meetingLink?: string;
@@ -104,8 +134,16 @@ export class JobsController {
   }
 
   @Patch(':id/candidates/:applicationId/interview-response')
-  respondToInterview(@Param('applicationId') applicationId: string, @Body() body) {
-    return this.jobsService.respondToInterview(+applicationId, body.status, body.note, body.proposedAt);
+  respondToInterview(
+    @Param('applicationId') applicationId: string,
+    @Body() body,
+  ) {
+    return this.jobsService.respondToInterview(
+      +applicationId,
+      body.status,
+      body.note,
+      body.proposedAt,
+    );
   }
   @Post(':id/candidates')
   attachCandidate(
@@ -113,6 +151,10 @@ export class JobsController {
     @Body('candidateId') candidateId: string,
     @Request() req,
   ) {
-    return this.jobsService.attachCandidate(+jobId, +candidateId, req.user.companyId);
+    return this.jobsService.attachCandidate(
+      +jobId,
+      +candidateId,
+      req.user.companyId,
+    );
   }
 }

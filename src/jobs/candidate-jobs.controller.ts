@@ -37,8 +37,15 @@ export class CandidateJobsController {
     @Query('workFormat') workFormat?: 'REMOTE' | 'HYBRID' | 'ONSITE',
     @Query('contractType') contractType?: 'CLT' | 'PJ' | 'FREELANCER',
     @Query('jobType') jobType?: 'STANDARD' | 'INTERNSHIP' | 'TRAINEE',
-    @Query('experienceLevel') experienceLevel?: 'ESTAGIO' | 'JUNIOR' | 'PLENO' | 'SENIOR' | 'ESPECIALISTA',
-    @Query('affirmative') affirmative?: 'NOT_INFORMED' | 'PCD' | 'WOMEN' | 'FIFTY_PLUS' | 'LGBTQIAPN',
+    @Query('experienceLevel')
+    experienceLevel?:
+      | 'ESTAGIO'
+      | 'JUNIOR'
+      | 'PLENO'
+      | 'SENIOR'
+      | 'ESPECIALISTA',
+    @Query('affirmative')
+    affirmative?: 'NOT_INFORMED' | 'PCD' | 'WOMEN' | 'FIFTY_PLUS' | 'LGBTQIAPN',
     @Query('sectorId') sectorId?: string,
     @Query('positionId') positionId?: string,
     @Query('benefitIds') benefitIds?: string,
@@ -59,7 +66,10 @@ export class CandidateJobsController {
       sectorId: sectorId ? +sectorId : undefined,
       positionId: positionId ? +positionId : undefined,
       benefitIds: benefitIds
-        ? benefitIds.split(',').map((id) => +id).filter((id) => !Number.isNaN(id))
+        ? benefitIds
+            .split(',')
+            .map((id) => +id)
+            .filter((id) => !Number.isNaN(id))
         : undefined,
       salaryMin: salaryMin ? +salaryMin : undefined,
       salaryMax: salaryMax ? +salaryMax : undefined,

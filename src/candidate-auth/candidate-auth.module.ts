@@ -18,10 +18,6 @@ import { CandidateJwtStrategy } from './strategies/candidate-jwt.strategy';
     }),
   ],
   controllers: [CandidateAuthController],
-  providers: [
-    CandidateAuthService,
-    CpfApiService,
-    CandidateJwtStrategy,
-  ],
+  providers: [CandidateAuthService, CpfApiService, CandidateJwtStrategy],
 })
-export class CandidateAuthModule { }
+export class CandidateAuthModule {}

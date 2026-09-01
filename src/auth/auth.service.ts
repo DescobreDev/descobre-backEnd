@@ -11,10 +11,19 @@ import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 
 const PASSWORD_RULES = [
-  { regex: /[A-Z]/, message: 'A senha deve conter pelo menos uma letra maiúscula.' },
-  { regex: /[a-z]/, message: 'A senha deve conter pelo menos uma letra minúscula.' },
+  {
+    regex: /[A-Z]/,
+    message: 'A senha deve conter pelo menos uma letra maiúscula.',
+  },
+  {
+    regex: /[a-z]/,
+    message: 'A senha deve conter pelo menos uma letra minúscula.',
+  },
   { regex: /[0-9]/, message: 'A senha deve conter pelo menos um número.' },
-  { regex: /[^A-Za-z0-9]/, message: 'A senha deve conter pelo menos um caractere especial.' },
+  {
+    regex: /[^A-Za-z0-9]/,
+    message: 'A senha deve conter pelo menos um caractere especial.',
+  },
 ];
 
 const MAX_ATTEMPTS = 5;
@@ -41,7 +50,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private mailService: MailService,
-  ) { }
+  ) {}
 
   // ─── Register ────────────────────────────────────────────────────────────────
 
@@ -194,7 +203,8 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Credenciais inválidas.');
 
     const passwordMatch = await bcrypt.compare(data.password, user.password);
-    if (!passwordMatch) throw new UnauthorizedException('Credenciais inválidas.');
+    if (!passwordMatch)
+      throw new UnauthorizedException('Credenciais inválidas.');
 
     if (!user.isVerified) {
       // Reenvia o código se já passou o cooldown
@@ -216,14 +226,19 @@ export class AuthService {
           },
         });
 
-        await this.mailService.sendVerificationCode(user.email, code, user.name);
+        await this.mailService.sendVerificationCode(
+          user.email,
+          code,
+          user.name,
+        );
       }
 
       throw new HttpException(
         {
           statusCode: 403,
           error: 'email_not_verified',
-          message: 'Confirme seu email antes de entrar. Um novo código foi enviado.',
+          message:
+            'Confirme seu email antes de entrar. Um novo código foi enviado.',
           email: user.email,
         },
         HttpStatus.FORBIDDEN,
@@ -283,7 +298,11 @@ export class AuthService {
 
   // ─── Reset Password ───────────────────────────────────────────────────────────
 
-  async resetPassword(data: { email: string; code: string; newPassword: string }) {
+  async resetPassword(data: {
+    email: string;
+    code: string;
+    newPassword: string;
+  }) {
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -293,13 +312,12 @@ export class AuthService {
     }
 
     if (user.resetPasswordAttempts >= MAX_ATTEMPTS) {
-      throw new BadRequestException('Muitas tentativas. Solicite um novo código.');
+      throw new BadRequestException(
+        'Muitas tentativas. Solicite um novo código.',
+      );
     }
 
-    if (
-      !user.resetPasswordExpires ||
-      user.resetPasswordExpires < new Date()
-    ) {
+    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
       throw new BadRequestException('Código expirado. Solicite um novo.');
     }
 

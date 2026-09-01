@@ -16,9 +16,9 @@ export function verificationCodeEmail({
   code,
   expiresInMinutes = 15,
 }: VerificationCodeEmailParams): { html: string; text: string } {
-  const codeDigits = code.split('').join(
-    '<span style="display:inline-block;width:8px;"></span>',
-  );
+  const codeDigits = code
+    .split('')
+    .join('<span style="display:inline-block;width:8px;"></span>');
 
   const html = `
 <!DOCTYPE html>

@@ -10,11 +10,15 @@ export class GeminiService {
   constructor(private readonly usageService: UsageService) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY não foi encontrada nas variáveis de ambiente.');
+      throw new Error(
+        'GEMINI_API_KEY não foi encontrada nas variáveis de ambiente.',
+      );
     }
 
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+    this.model = this.genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash-lite',
+    });
   }
 
   async generateSummaryVacancy(
@@ -33,9 +37,12 @@ export class GeminiService {
     const { sector, position, title, workFormat, city, state } = params;
 
     const workFormatLabel =
-      workFormat === 'REMOTE' ? 'Remoto'
-        : workFormat === 'HYBRID' ? 'Híbrido'
-          : workFormat === 'ONSITE' ? 'Presencial'
+      workFormat === 'REMOTE'
+        ? 'Remoto'
+        : workFormat === 'HYBRID'
+          ? 'Híbrido'
+          : workFormat === 'ONSITE'
+            ? 'Presencial'
             : 'Não informado';
 
     const locationInfo =
@@ -79,7 +86,9 @@ export class GeminiService {
     } catch (error) {
       await this.usageService.decrement(companyId, 'aiResumeUsed');
       console.error('Erro detalhado da API Gemini:', error);
-      throw new InternalServerErrorException('Falha ao gerar o resumo da vaga.');
+      throw new InternalServerErrorException(
+        'Falha ao gerar o resumo da vaga.',
+      );
     }
   }
 
@@ -99,9 +108,11 @@ export class GeminiService {
     const { title, sector, position, workFormat, city, state } = params;
 
     const location =
-      workFormat === 'REMOTE' ? 'Brasil (remoto)'
-      : city && state ? `${city}, ${state}`
-      : 'Brasil';
+      workFormat === 'REMOTE'
+        ? 'Brasil (remoto)'
+        : city && state
+          ? `${city}, ${state}`
+          : 'Brasil';
 
     const prompt = `Você é um especialista em remuneração do mercado brasileiro.
       Estime as faixas salariais mensais em BRL para:
@@ -140,18 +151,18 @@ export class GeminiService {
     } catch (error) {
       await this.usageService.decrement(companyId, 'aiSalaryUsed');
       console.error('Erro ao buscar sugestão de salário:', error);
-      throw new InternalServerErrorException('Falha ao gerar sugestão de salário.');
+      throw new InternalServerErrorException(
+        'Falha ao gerar sugestão de salário.',
+      );
     }
   }
 
-  async generateJobProfile(
-    params: {
-      title: string;
-      sector: string;
-      position: string;
-      description?: string;
-    },
-  ): Promise<{
+  async generateJobProfile(params: {
+    title: string;
+    sector: string;
+    position: string;
+    description?: string;
+  }): Promise<{
     analyst: number;
     communicator: number;
     executor: number;
@@ -202,17 +213,22 @@ export class GeminiService {
       const sum = analyst + communicator + executor + planner;
 
       if (sum !== 10) throw new Error(`Soma inválida: ${sum}`);
-      if ([analyst, communicator, executor, planner].some((v) => v < 0 || v > 5)) {
+      if (
+        [analyst, communicator, executor, planner].some((v) => v < 0 || v > 5)
+      ) {
         throw new Error('Valor fora do range 0-5');
       }
 
       const validProfiles = ['ANALYST', 'COMMUNICATOR', 'EXECUTOR', 'PLANNER'];
-      if (!validProfiles.includes(priority)) throw new Error(`Priority inválido: ${priority}`);
+      if (!validProfiles.includes(priority))
+        throw new Error(`Priority inválido: ${priority}`);
 
       return { analyst, communicator, executor, planner, priority };
     } catch (error) {
       console.error('Erro ao gerar perfil da vaga:', error);
-      throw new InternalServerErrorException('Falha ao gerar perfil comportamental da vaga.');
+      throw new InternalServerErrorException(
+        'Falha ao gerar perfil comportamental da vaga.',
+      );
     }
   }
 }

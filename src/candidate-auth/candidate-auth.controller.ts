@@ -3,15 +3,18 @@ import { CandidateAuthService } from './candidate-auth.service';
 
 @Controller('candidate/auth')
 export class CandidateAuthController {
-  constructor(private readonly candidateAuthService: CandidateAuthService) { }
+  constructor(private readonly candidateAuthService: CandidateAuthService) {}
 
   @Post('register')
-  register(@Body() body: {
-    cpf: string;
-    password: string;
-    name: string;
-    birthDate?: string | null;
-  }) {
+  register(
+    @Body()
+    body: {
+      cpf: string;
+      password: string;
+      name: string;
+      birthDate?: string | null;
+    },
+  ) {
     return this.candidateAuthService.register(body);
   }
 

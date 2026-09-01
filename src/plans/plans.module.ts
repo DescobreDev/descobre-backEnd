@@ -9,5 +9,4 @@ import { AuthModule } from '../auth/auth.module';
   controllers: [PlansController],
   providers: [PlansService],
 })
-
 export class PlansModule {}

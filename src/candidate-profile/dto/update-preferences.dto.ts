@@ -9,19 +9,24 @@ import {
 import { ContractType, ExperienceLevel } from '@prisma/client';
 
 export class UpdatePreferencesDto {
-  @IsOptional() @IsInt()
+  @IsOptional()
+  @IsInt()
   desiredSectorId?: number;
 
-  @IsOptional() @IsInt()
+  @IsOptional()
+  @IsInt()
   desiredPositionId?: number;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   salaryMin?: number;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   salaryMax?: number;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   salaryNegotiable?: boolean;
 
   @IsOptional()

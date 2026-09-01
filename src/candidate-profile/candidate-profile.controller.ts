@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Patch, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { CandidateAuthGuard } from 'src/candidate-auth/guards/candidate-auth.guard';
 import { CandidateProfileService } from './candidate-profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';

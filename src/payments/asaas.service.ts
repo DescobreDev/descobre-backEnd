@@ -54,12 +54,16 @@ export class AsaasService {
 
   private get headers() {
     return {
-      'access_token': this.apiKey,
+      access_token: this.apiKey,
       'Content-Type': 'application/json',
     };
   }
 
-  private async request<T>(method: 'post' | 'get' | 'delete', path: string, body?: object): Promise<T> {
+  private async request<T>(
+    method: 'post' | 'get' | 'delete',
+    path: string,
+    body?: object,
+  ): Promise<T> {
     try {
       const { data } = await firstValueFrom(
         this.http.request<T>({
@@ -71,7 +75,10 @@ export class AsaasService {
       );
       return data;
     } catch (err) {
-      const msg = err?.response?.data?.errors?.[0]?.description ?? err?.message ?? 'Erro no Asaas';
+      const msg =
+        err?.response?.data?.errors?.[0]?.description ??
+        err?.message ??
+        'Erro no Asaas';
       this.logger.error(`[Asaas] ${method.toUpperCase()} ${path} → ${msg}`);
       throw new BadRequestException(msg);
     }
@@ -94,7 +101,11 @@ export class AsaasService {
     await this.request('delete', `/subscriptions/${asaasSubId}`, {});
   }
 
-  async tokenizeCard(dto: TokenizeCardDto): Promise<{ creditCardToken: string; creditCardNumber: string; creditCardBrand: string }> {
+  async tokenizeCard(dto: TokenizeCardDto): Promise<{
+    creditCardToken: string;
+    creditCardNumber: string;
+    creditCardBrand: string;
+  }> {
     return this.request('post', '/creditCard/tokenize', {
       customer: dto.customerId,
       creditCard: {
@@ -115,7 +126,9 @@ export class AsaasService {
     });
   }
 
-  async createSubscription(dto: CreateSubscriptionDto): Promise<{ id: string; status: string }> {
+  async createSubscription(
+    dto: CreateSubscriptionDto,
+  ): Promise<{ id: string; status: string }> {
     const dueDateStr = new Date().toISOString().split('T')[0];
 
     return this.request('post', '/subscriptions', {

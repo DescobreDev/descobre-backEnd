@@ -1,4 +1,11 @@
-import { IsEmail, IsString, MinLength, Length, IsBoolean, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  Length,
+  IsBoolean,
+  IsOptional,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class RegisterDto {

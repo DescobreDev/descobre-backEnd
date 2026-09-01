@@ -7,16 +7,9 @@ import { WebhookController } from './webhook.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [
-    HttpModule,
-    ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule,
-  ],
-  controllers: [
-    PaymentsController,
-    WebhookController,
-  ],
+  imports: [HttpModule, ConfigModule.forRoot({ isGlobal: true }), PrismaModule],
+  controllers: [PaymentsController, WebhookController],
   providers: [AsaasService],
-  exports:   [AsaasService],
+  exports: [AsaasService],
 })
 export class PaymentsModule {}

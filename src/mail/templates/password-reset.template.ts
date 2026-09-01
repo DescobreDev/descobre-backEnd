@@ -1,4 +1,10 @@
-export function passwordResetEmail({ name, code }: { name: string; code: string }) {
+export function passwordResetEmail({
+  name,
+  code,
+}: {
+  name: string;
+  code: string;
+}) {
   const html = `
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
       <h2>Redefinição de senha</h2>

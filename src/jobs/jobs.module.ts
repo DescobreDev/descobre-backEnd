@@ -11,7 +11,11 @@ import { GeminiModule } from '../gemini/gemini.module';
 
 @Module({
   imports: [PrismaModule, AuthModule, UsageModule, GeminiModule],
-  controllers: [JobsController, CandidateJobsController, CandidateApplicationsController ],
+  controllers: [
+    JobsController,
+    CandidateJobsController,
+    CandidateApplicationsController,
+  ],
   providers: [JobsService, PlanGuard],
 })
 export class JobsModule {}

@@ -16,7 +16,7 @@ export class CandidateAuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private cpfApiService: CpfApiService,
-  ) { }
+  ) {}
 
   async checkCpf(cpf: string) {
     const cleanCpf = cpf.replace(/\D/g, '');
@@ -112,10 +112,12 @@ export class CandidateAuthService {
     const candidate = await this.prisma.candidate.findUnique({
       where: { cpf: cleanCpf },
     });
-    if (!candidate) throw new UnauthorizedException('CPF não encontrado! Crie uma conta');
+    if (!candidate)
+      throw new UnauthorizedException('CPF não encontrado! Crie uma conta');
 
     const passwordMatch = await bcrypt.compare(password, candidate.password);
-    if (!passwordMatch) throw new UnauthorizedException('CPF ou senha inválidos.');
+    if (!passwordMatch)
+      throw new UnauthorizedException('CPF ou senha inválidos.');
 
     const token = this.jwtService.sign({
       sub: candidate.id,
@@ -136,7 +138,6 @@ export class CandidateAuthService {
       },
     };
   }
-
 
   private isValidCpf(cpf: string): boolean {
     if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;

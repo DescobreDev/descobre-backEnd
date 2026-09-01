@@ -9,7 +9,9 @@ class PriorityItem {
 
 export class UpdatePrioritiesDto {
   @IsArray()
-  @ArrayMinSize(3, { message: 'Selecione ao menos 3 prioridades profissionais.' })
+  @ArrayMinSize(3, {
+    message: 'Selecione ao menos 3 prioridades profissionais.',
+  })
   @ValidateNested({ each: true })
   @Type(() => PriorityItem)
   priorities: PriorityItem[];

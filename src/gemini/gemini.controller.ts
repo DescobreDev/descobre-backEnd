@@ -6,30 +6,41 @@ import { PlanGuard } from '../guards/plan.guard';
 @Controller('ai')
 @UseGuards(AuthGuard('jwt'), PlanGuard)
 export class GeminiController {
-  constructor(private readonly geminiService: GeminiService) { }
+  constructor(private readonly geminiService: GeminiService) {}
 
   @Post('vacancySummary')
-  async generateSummary(@Request() req, @Body() body: {
-    title: string;
-    sector: string;
-    position: string;
-    workFormat?: string;
-    city?: string;
-    state?: string;
-  }) {
+  async generateSummary(
+    @Request() req,
+    @Body()
+    body: {
+      title: string;
+      sector: string;
+      position: string;
+      workFormat?: string;
+      city?: string;
+      state?: string;
+    },
+  ) {
     return this.geminiService.generateSummaryVacancy(req.user.companyId, body);
   }
 
   @Post('salarySuggestion')
-  async generateSalarySuggestion(@Request() req, @Body() body: {
-    title: string;
-    sector: string;
-    position: string;
-    workFormat?: string;
-    city?: string;
-    state?: string;
-  }) {
-    return this.geminiService.generateSalarySuggestion(req.user.companyId, body);
+  async generateSalarySuggestion(
+    @Request() req,
+    @Body()
+    body: {
+      title: string;
+      sector: string;
+      position: string;
+      workFormat?: string;
+      city?: string;
+      state?: string;
+    },
+  ) {
+    return this.geminiService.generateSalarySuggestion(
+      req.user.companyId,
+      body,
+    );
   }
 
   @Post('jobProfile')

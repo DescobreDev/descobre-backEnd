@@ -246,6 +246,7 @@ model CardToken {
 
 model WebhookLog {
   id                  Int      @id @default(autoincrement())
+  asaasEventId        String?  @unique  
   event               String
   asaasPaymentId      String
   asaasSubscriptionId String

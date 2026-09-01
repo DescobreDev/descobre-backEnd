@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { verificationCodeEmail } from './templates/verification-code.template';
 import { passwordResetEmail } from './templates/password-reset.template';
 
@@ -49,7 +53,10 @@ export class MailService {
 
       this.logger.log(`Código de redefinição de senha enviado para ${email}`);
     } catch (error) {
-      this.logger.error(`Falha ao enviar código de redefinição para ${email}`, error as Error);
+      this.logger.error(
+        `Falha ao enviar código de redefinição para ${email}`,
+        error as Error,
+      );
       throw new InternalServerErrorException('Erro ao enviar email');
     }
   }

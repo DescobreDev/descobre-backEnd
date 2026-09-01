@@ -1,6 +1,14 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe,
-  Post, Put, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { CandidateAuthGuard } from 'src/candidate-auth/guards/candidate-auth.guard';
 import { CandidateResumeService } from './candidate-resume.service';

@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Query, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ApplicationStatus } from '@prisma/client';
 import { JobsService } from '../jobs/jobs.service';
 import { CandidateAuthGuard } from '../candidate-auth/guards/candidate-auth.guard';

@@ -1,13 +1,25 @@
-import { AffirmativeType, ContractType, ExperienceLevel, ProfileType, WorkFormat } from '@prisma/client';
+import {
+  AffirmativeType,
+  ContractType,
+  ExperienceLevel,
+  ProfileType,
+  WorkFormat,
+} from '@prisma/client';
 
-const EXPERIENCE_ORDER: ExperienceLevel[] = ['ESTAGIO', 'JUNIOR', 'PLENO', 'SENIOR', 'ESPECIALISTA'];
+const EXPERIENCE_ORDER: ExperienceLevel[] = [
+  'ESTAGIO',
+  'JUNIOR',
+  'PLENO',
+  'SENIOR',
+  'ESPECIALISTA',
+];
 
 const WEIGHTS = {
   disc: 0.35,
-  cargo: 0.20,
+  cargo: 0.2,
   salario: 0.15,
   regime: 0.15,
-  localizacao: 0.10,
+  localizacao: 0.1,
   experiencia: 0.05,
 } as const;
 
@@ -47,7 +59,7 @@ export interface MatchInput {
 
 export interface MatchBreakdownItem {
   label: string;
-  weight: number;      // peso original do critério (0-1)
+  weight: number; // peso original do critério (0-1)
   score: number | null; // 0-1, null = sem dado suficiente (não entrou no cálculo)
   contribution: number; // pontos (0-100) que esse critério deu no score final
 }
@@ -74,17 +86,29 @@ function calcDisc(
   return Math.min(score, 1);
 }
 
-function calcCargo(job: MatchInput['job'], candidate: MatchInput['candidate']): number | null {
+function calcCargo(
+  job: MatchInput['job'],
+  candidate: MatchInput['candidate'],
+): number | null {
   if (!candidate.desiredPositionId && !candidate.desiredSectorId) return null;
-  if (candidate.desiredPositionId && candidate.desiredPositionId === job.positionId) return 1;
-  if (candidate.desiredSectorId && candidate.desiredSectorId === job.sectorId) return 0.6;
+  if (
+    candidate.desiredPositionId &&
+    candidate.desiredPositionId === job.positionId
+  )
+    return 1;
+  if (candidate.desiredSectorId && candidate.desiredSectorId === job.sectorId)
+    return 0.6;
   // "categoria relacionada" exige árvore de profissões — não implementado ainda
   return 0;
 }
 
-function calcSalario(job: MatchInput['job'], candidate: MatchInput['candidate']): number | null {
+function calcSalario(
+  job: MatchInput['job'],
+  candidate: MatchInput['candidate'],
+): number | null {
   if (job.salary == null) return null;
-  if (candidate.desiredSalaryMin == null && candidate.desiredSalaryMax == null) return null;
+  if (candidate.desiredSalaryMin == null && candidate.desiredSalaryMax == null)
+    return null;
 
   const min = candidate.desiredSalaryMin ?? -Infinity;
   const max = candidate.desiredSalaryMax ?? Infinity;
@@ -93,13 +117,17 @@ function calcSalario(job: MatchInput['job'], candidate: MatchInput['candidate'])
   if (job.salary > max) return 1; // vaga paga acima do esperado, não penaliza
 
   const deficit = (min - job.salary) / min; // quanto a vaga fica abaixo do mínimo desejado
-  if (deficit <= 0.10) return 0.7;
+  if (deficit <= 0.1) return 0.7;
   if (deficit <= 0.25) return 0.4;
   return 0;
 }
 
-function calcRegime(job: MatchInput['job'], candidate: MatchInput['candidate']): number | null {
-  if (!candidate.contractTypes || candidate.contractTypes.length === 0) return null;
+function calcRegime(
+  job: MatchInput['job'],
+  candidate: MatchInput['candidate'],
+): number | null {
+  if (!candidate.contractTypes || candidate.contractTypes.length === 0)
+    return null;
 
   const matches = candidate.contractTypes.includes(job.contractType);
   if (matches && candidate.contractTypes.length === 1) return 1;
@@ -108,12 +136,22 @@ function calcRegime(job: MatchInput['job'], candidate: MatchInput['candidate']):
   return 0;
 }
 
-function calcLocalizacao(job: MatchInput['job'], candidate: MatchInput['candidate']): number | null {
+function calcLocalizacao(
+  job: MatchInput['job'],
+  candidate: MatchInput['candidate'],
+): number | null {
   if (job.workFormat === 'REMOTE') return 1;
-  if ((!job.city && !job.state) || (!candidate.city && !candidate.state)) return null;
+  if ((!job.city && !job.state) || (!candidate.city && !candidate.state))
+    return null;
 
-  const sameCity = !!job.city && !!candidate.city && job.city.toLowerCase() === candidate.city.toLowerCase();
-  const sameState = !!job.state && !!candidate.state && job.state.toLowerCase() === candidate.state.toLowerCase();
+  const sameCity =
+    !!job.city &&
+    !!candidate.city &&
+    job.city.toLowerCase() === candidate.city.toLowerCase();
+  const sameState =
+    !!job.state &&
+    !!candidate.state &&
+    job.state.toLowerCase() === candidate.state.toLowerCase();
 
   let base = sameCity ? 1 : sameState ? 0.6 : 0;
   // Aproximação: sem CEP/lat-long não dá pra medir km reais (30km/60km/100km do modelo original)
@@ -122,7 +160,10 @@ function calcLocalizacao(job: MatchInput['job'], candidate: MatchInput['candidat
   return base;
 }
 
-function calcExperiencia(jobLevel?: ExperienceLevel | null, candLevel?: ExperienceLevel | null): number | null {
+function calcExperiencia(
+  jobLevel?: ExperienceLevel | null,
+  candLevel?: ExperienceLevel | null,
+): number | null {
   if (!jobLevel || !candLevel) return null;
   const jobIdx = EXPERIENCE_ORDER.indexOf(jobLevel);
   const candIdx = EXPERIENCE_ORDER.indexOf(candLevel);
@@ -133,7 +174,11 @@ function calcExperiencia(jobLevel?: ExperienceLevel | null, candLevel?: Experien
   return 0;
 }
 
-export function calculateMatchScore({ job, jobProfile, candidate }: MatchInput): MatchResult {
+export function calculateMatchScore({
+  job,
+  jobProfile,
+  candidate,
+}: MatchInput): MatchResult {
   const labels: Record<CriterioKey, string> = {
     disc: 'Perfil comportamental',
     cargo: 'Cargo / Profissão',
@@ -150,7 +195,12 @@ export function calculateMatchScore({ job, jobProfile, candidate }: MatchInput):
       const breakdown = Object.fromEntries(
         (Object.keys(WEIGHTS) as CriterioKey[]).map((key) => [
           key,
-          { label: labels[key], weight: WEIGHTS[key], score: null, contribution: 0 },
+          {
+            label: labels[key],
+            weight: WEIGHTS[key],
+            score: null,
+            contribution: 0,
+          },
         ]),
       ) as Record<CriterioKey, MatchBreakdownItem>;
 
@@ -165,12 +215,20 @@ export function calculateMatchScore({ job, jobProfile, candidate }: MatchInput):
   }
 
   const raw: Record<CriterioKey, number | null> = {
-    disc: calcDisc(jobProfile?.primaryProfile, jobProfile?.secondaryProfile, candidate.profileType, candidate.profileTypeSecondary),
+    disc: calcDisc(
+      jobProfile?.primaryProfile,
+      jobProfile?.secondaryProfile,
+      candidate.profileType,
+      candidate.profileTypeSecondary,
+    ),
     cargo: calcCargo(job, candidate),
     salario: calcSalario(job, candidate),
     regime: calcRegime(job, candidate),
     localizacao: calcLocalizacao(job, candidate),
-    experiencia: calcExperiencia(jobProfile?.experienceLevel, candidate.experienceLevel),
+    experiencia: calcExperiencia(
+      jobProfile?.experienceLevel,
+      candidate.experienceLevel,
+    ),
   };
 
   // Redistribui o peso dos critérios sem dado entre os que têm dado
@@ -184,10 +242,16 @@ export function calculateMatchScore({ job, jobProfile, candidate }: MatchInput):
 
   for (const key of Object.keys(raw) as CriterioKey[]) {
     const score = raw[key];
-    const normalizedWeight = availableWeightSum > 0 ? WEIGHTS[key] / availableWeightSum : 0;
+    const normalizedWeight =
+      availableWeightSum > 0 ? WEIGHTS[key] / availableWeightSum : 0;
     const contribution = score !== null ? score * normalizedWeight * 100 : 0;
     finalScore += contribution;
-    breakdown[key] = { label: labels[key], weight: WEIGHTS[key], score, contribution };
+    breakdown[key] = {
+      label: labels[key],
+      weight: WEIGHTS[key],
+      score,
+      contribution,
+    };
   }
 
   return { eligible: true, finalScore: Math.round(finalScore), breakdown };
